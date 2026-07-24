@@ -2,6 +2,16 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { ChatMessage, Trip, UserProfile } from "../types";
 import { createWelcomeMessage, getAssistantReply } from "../lib/chatService";
+import { useProfileStore } from "./profileStore";
+
+const fallbackProfile: UserProfile = {
+  name: "",
+  interests: [],
+  pace: "balanced",
+  budget: "mid-range",
+  dietary: [],
+  subscribed: false,
+};
 
 interface ChatState {
   messages: ChatMessage[];
@@ -40,9 +50,10 @@ export const useChatStore = create<ChatState>()(
 
         const history = get().messages;
         const trip = get().trip;
+        const profile = useProfileStore.getState().profile ?? fallbackProfile;
 
         try {
-          const reply = await getAssistantReply(trimmed, trip, history);
+          const reply = await getAssistantReply(trimmed, trip, history, profile);
 
           const assistantMessage: ChatMessage = {
             id: crypto.randomUUID(),

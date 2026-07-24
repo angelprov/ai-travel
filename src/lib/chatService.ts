@@ -1,34 +1,20 @@
 import type { AssistantMessage, ChatMessage, Trip, UserProfile } from "../types";
 import { destinations, defaultDestination, findDestinationByMessage } from "../mocks/destinations";
+import { API_URL } from "./apiClient";
 
 // ---------------------------------------------------------------------------
-// Mock conversation layer.
-//
 // getAssistantReply() is the single seam this whole app talks through to get
-// an assistant response. Everything below it is simple keyword matching over
-// canned mock data, clearly marked so it's a drop-in replacement point.
+// an assistant response. It calls the Waypoint backend's POST /api/chat
+// (server/) with the full chat history + current trip state on every turn —
+// the backend itself decides whether to answer with real Claude (tool-use,
+// see server/src/services/claudeService.ts) or its mock intent engine,
+// depending on whether ANTHROPIC_API_KEY is configured there.
 //
-// TODO (real integration): replace the body of getAssistantReply with a call
-// to the Claude API, e.g.:
-//
-//   const response = await anthropic.messages.create({
-//     model: "claude-sonnet-5",
-//     system: buildSystemPrompt(tripState),
-//     messages: toClaudeMessages(history.concat(userTurn)),
-//   });
-//
-// The Messages API is stateless: it has no memory of previous calls, so the
-// *full* chat history plus the current trip state must be sent on every
-// single turn (not just the latest user message). The response would need
-// to come back as a structured payload (short reply text + an optional
-// itinerary "patch": a new/updated stay, days, or suggested place) so the UI
-// layer here doesn't have to change at all when this seam is swapped out.
+// If the backend can't be reached at all (not running, network error), this
+// falls back to the local mock logic below so the app keeps working.
 // ---------------------------------------------------------------------------
 
 const MOCK_REPLY_DELAY_MS = 1100;
-
-/** Small, deliberate failure rate so the inline error state is reachable in the mock. */
-const SIMULATE_ERROR_RATE = 0.08;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -64,6 +50,8 @@ export function createWelcomeMessage(profile: UserProfile): ChatMessage {
     )} pace. Tell me where you're headed and roughly when, and I'll put together a full itinerary.`,
   };
 }
+
+// --- Local fallback (used only when the backend is unreachable) -----------
 
 async function buildInitialTripReply(userMessage: string): Promise<AssistantMessage> {
   const destination = findDestinationByMessage(userMessage);
@@ -116,23 +104,36 @@ function buildFollowUpReply(userMessage: string, trip: Trip): AssistantMessage {
   };
 }
 
-export async function getAssistantReply(
-  userMessage: string,
-  tripState: Trip | null,
-  _history: ChatMessage[],
-): Promise<AssistantMessage> {
+async function getLocalFallbackReply(userMessage: string, tripState: Trip | null): Promise<AssistantMessage> {
   await delay(MOCK_REPLY_DELAY_MS + Math.random() * 400);
-
-  if (Math.random() < SIMULATE_ERROR_RATE) {
-    return {
-      text: "Sorry, I hit a snag putting that together. Could you try again?",
-      isError: true,
-    };
-  }
 
   if (!tripState) {
     return buildInitialTripReply(userMessage);
   }
 
   return buildFollowUpReply(userMessage, tripState);
+}
+
+// --- Backend-backed reply ---------------------------------------------------
+
+export async function getAssistantReply(
+  userMessage: string,
+  tripState: Trip | null,
+  history: ChatMessage[],
+  profile: UserProfile,
+): Promise<AssistantMessage> {
+  try {
+    const response = await fetch(`${API_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userMessage, trip: tripState, history, profile }),
+    });
+
+    if (!response.ok) throw new Error(`Backend responded with ${response.status}`);
+
+    return (await response.json()) as AssistantMessage;
+  } catch (error) {
+    console.warn("[chatService] backend unreachable, using local mock:", error);
+    return getLocalFallbackReply(userMessage, tripState);
+  }
 }

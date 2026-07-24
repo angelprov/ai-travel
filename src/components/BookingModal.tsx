@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Lock, ExternalLink } from "lucide-react";
 import type { BookingTarget } from "../types";
 import { getBookingUrl, getSourceDomain, getSourceLabel } from "../lib/bookingService";
+import { useEscapeKey } from "../lib/useEscapeKey";
 
 interface BookingModalProps {
   target: BookingTarget;
@@ -16,11 +18,13 @@ export function BookingModal({ target, onClose }: BookingModalProps) {
     return () => cancelAnimationFrame(frame);
   }, []);
 
+  useEscapeKey(onClose);
+
   const domain = getSourceDomain(target.source);
   const url = getBookingUrl(target.source, target.name);
   const isEmbeddable = target.source === "getyourguide" || target.source === "booking";
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <button
         type="button"
@@ -107,6 +111,7 @@ export function BookingModal({ target, onClose }: BookingModalProps) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

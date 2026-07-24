@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass } from "lucide-react";
+import { Compass, MessageCircle, Map } from "lucide-react";
 import { useProfileStore } from "../store/profileStore";
 import { useChatStore } from "../store/chatStore";
 import { ChatThread } from "../components/ChatThread";
@@ -8,7 +8,10 @@ import { Composer } from "../components/Composer";
 import { QuickPrompts } from "../components/QuickPrompts";
 import { PlaceDetailSheet } from "../components/PlaceDetailSheet";
 import { BookingModal } from "../components/BookingModal";
+import { ItineraryPanel } from "../components/ItineraryPanel";
 import type { BookingTarget, Place, Stay } from "../types";
+
+type MobileTab = "chat" | "itinerary";
 
 export function ChatScreen() {
   const navigate = useNavigate();
@@ -22,6 +25,7 @@ export function ChatScreen() {
 
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [bookingTarget, setBookingTarget] = useState<BookingTarget | null>(null);
+  const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
 
   useEffect(() => {
     if (profile) initialize(profile);
@@ -42,6 +46,14 @@ export function ChatScreen() {
     setBookingTarget({ source: stay.source, name: stay.name, price: stay.totalPrice });
   };
 
+  const handleSwapPlace = (place: Place) => {
+    void sendMessage(`Swap ${place.name} for something else`);
+  };
+
+  const handleRemovePlace = (place: Place) => {
+    void sendMessage(`Remove ${place.name} from the itinerary`);
+  };
+
   return (
     <div className="flex h-dvh flex-col bg-parchment">
       <header className="flex shrink-0 items-center gap-2 border-b border-hairline bg-parchment/95 px-4 py-3 backdrop-blur">
@@ -58,16 +70,58 @@ export function ChatScreen() {
         </div>
       </header>
 
-      <ChatThread
-        messages={messages}
-        isThinking={isThinking}
-        onSelectPlace={setSelectedPlace}
-        onBookStay={handleBookStay}
-      />
+      <div className="flex shrink-0 border-b border-hairline md:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileTab("chat")}
+          className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wide ${
+            mobileTab === "chat" ? "border-b-2 border-brass text-ink" : "text-ink/40"
+          }`}
+        >
+          <MessageCircle className="h-3.5 w-3.5" />
+          Chat
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("itinerary")}
+          className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wide ${
+            mobileTab === "itinerary" ? "border-b-2 border-brass text-ink" : "text-ink/40"
+          }`}
+        >
+          <Map className="h-3.5 w-3.5" />
+          Itinerary
+          {trip && <span className="h-1.5 w-1.5 rounded-full bg-brass" />}
+        </button>
+      </div>
 
-      <div className="shrink-0 border-t border-hairline bg-parchment">
-        {trip && <QuickPrompts onSelect={sendMessage} disabled={isThinking} />}
-        <Composer onSend={sendMessage} isThinking={isThinking} hasTrip={Boolean(trip)} />
+      <div className="flex min-h-0 flex-1">
+        <div className={`min-w-0 flex-1 flex-col ${mobileTab === "chat" ? "flex" : "hidden"} md:flex`}>
+          <ChatThread
+            messages={messages}
+            isThinking={isThinking}
+            onSelectPlace={setSelectedPlace}
+            onBookStay={handleBookStay}
+          />
+
+          <div className="shrink-0 border-t border-hairline bg-parchment">
+            {trip && <QuickPrompts onSelect={sendMessage} disabled={isThinking} />}
+            <Composer onSend={sendMessage} isThinking={isThinking} hasTrip={Boolean(trip)} />
+          </div>
+        </div>
+
+        <div
+          className={`w-full shrink-0 flex-col border-hairline bg-parchment md:flex md:w-[380px] md:border-l lg:w-[420px] ${
+            mobileTab === "itinerary" ? "flex" : "hidden"
+          }`}
+        >
+          <ItineraryPanel
+            trip={trip}
+            onSelectPlace={setSelectedPlace}
+            onBookStay={handleBookStay}
+            onSwapPlace={handleSwapPlace}
+            onRemovePlace={handleRemovePlace}
+          />
+        </div>
       </div>
 
       {selectedPlace && (
