@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+@theme {
+  --color-parchment: #f3ecdd;
+  --color-ink: #14243d;
+  --color-brass: #c9972b;
+  --color-brass-dark: #a97e22;
+  --color-teal: #2f6e62;
+  --color-teal-dark: #23554b;
+  --color-card: #fffdf8;
+  --color-hairline: #e3d9c2;
+
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-hairline);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-parchment);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  /* Dashed "boarding pass" bottom edge, notched like a torn ticket stub. */
+  .ticket-edge {
+    position: relative;
+  }
+
+  .ticket-edge::after {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0;
+    border-bottom: 1.5px dashed var(--color-hairline);
+  }
+
+  .route-line {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      var(--color-brass) 0,
+      var(--color-brass) 6px,
+      transparent 6px,
+      transparent 12px
+    );
+    width: 2px;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-hairline) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
