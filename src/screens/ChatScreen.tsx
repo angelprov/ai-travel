@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Compass, MessageCircle, Map } from "lucide-react";
+import { Compass, MessageCircle, Map, LogOut } from "lucide-react";
 import { useProfileStore } from "../store/profileStore";
 import { useChatStore } from "../store/chatStore";
+import { useAuthStore } from "../store/authStore";
 import { ChatThread } from "../components/ChatThread";
 import { Composer } from "../components/Composer";
 import { QuickPrompts } from "../components/QuickPrompts";
@@ -16,6 +17,8 @@ type MobileTab = "chat" | "itinerary";
 export function ChatScreen() {
   const navigate = useNavigate();
   const profile = useProfileStore((state) => state.profile);
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
 
   const messages = useChatStore((state) => state.messages);
   const trip = useChatStore((state) => state.trip);
@@ -54,6 +57,11 @@ export function ChatScreen() {
     void sendMessage(`Remove ${place.name} from the itinerary`);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className="flex h-dvh flex-col bg-parchment">
       <header className="flex shrink-0 items-center gap-2 border-b border-hairline bg-parchment/95 px-4 py-3 backdrop-blur">
@@ -68,6 +76,16 @@ export function ChatScreen() {
             </div>
           )}
         </div>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          title={user?.email}
+          aria-label="Log out"
+          className="ml-auto flex h-8 w-8 items-center justify-center rounded-full text-ink/40 transition-colors hover:bg-ink/5 hover:text-ink"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
       </header>
 
       <div className="flex shrink-0 border-b border-hairline md:hidden">

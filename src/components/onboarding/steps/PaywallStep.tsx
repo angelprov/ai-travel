@@ -4,9 +4,11 @@ import { plusFeatures } from "../../../lib/onboardingOptions";
 
 interface PaywallStepProps {
   onSelectPlan: (subscribed: boolean) => void;
+  saving?: boolean;
+  error?: string | null;
 }
 
-export function PaywallStep({ onSelectPlan }: PaywallStepProps) {
+export function PaywallStep({ onSelectPlan, saving, error }: PaywallStepProps) {
   return (
     <div className="flex min-h-screen flex-col bg-parchment px-6 py-10">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
@@ -33,18 +35,21 @@ export function PaywallStep({ onSelectPlan }: PaywallStepProps) {
             ))}
           </ul>
 
-          <Button onClick={() => onSelectPlan(true)} className="mt-7 w-full">
-            Start free trial
+          <Button onClick={() => onSelectPlan(true)} disabled={saving} className="mt-7 w-full">
+            {saving ? "Setting things up..." : "Start free trial"}
           </Button>
         </div>
 
         <button
           type="button"
           onClick={() => onSelectPlan(false)}
-          className="mt-6 text-center text-sm font-medium text-ink/60 underline-offset-4 hover:underline"
+          disabled={saving}
+          className="mt-6 text-center text-sm font-medium text-ink/60 underline-offset-4 hover:underline disabled:opacity-50"
         >
           Continue with Free plan
         </button>
+
+        {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
       </div>
     </div>
   );

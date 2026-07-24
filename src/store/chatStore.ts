@@ -1,88 +1,72 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { ChatMessage, Trip, UserProfile } from "../types";
 import { createWelcomeMessage, getAssistantReply } from "../lib/chatService";
-import { useProfileStore } from "./profileStore";
-
-const fallbackProfile: UserProfile = {
-  name: "",
-  interests: [],
-  pace: "balanced",
-  budget: "mid-range",
-  dietary: [],
-  subscribed: false,
-};
 
 interface ChatState {
   messages: ChatMessage[];
   trip: Trip | null;
   isThinking: boolean;
+  /** Populated from the server (signup/login/me response) — never from localStorage. */
+  hydrate: (trip: Trip | null, messages: ChatMessage[]) => void;
   initialize: (profile: UserProfile) => void;
   sendMessage: (text: string) => Promise<void>;
   reset: () => void;
 }
 
-export const useChatStore = create<ChatState>()(
-  persist(
-    (set, get) => ({
-      messages: [],
-      trip: null,
-      isThinking: false,
+export const useChatStore = create<ChatState>()((set, get) => ({
+  messages: [],
+  trip: null,
+  isThinking: false,
 
-      initialize: (profile) => {
-        if (get().messages.length > 0) return;
-        set({ messages: [createWelcomeMessage(profile)] });
-      },
+  hydrate: (trip, messages) => set({ trip, messages }),
 
-      sendMessage: async (text) => {
-        const trimmed = text.trim();
-        if (!trimmed) return;
+  initialize: (profile) => {
+    if (get().messages.length > 0) return;
+    set({ messages: [createWelcomeMessage(profile)] });
+  },
 
-        const userMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          role: "user",
-          text: trimmed,
-          createdAt: Date.now(),
-          status: "sent",
-        };
+  sendMessage: async (text) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
 
-        set((state) => ({ messages: [...state.messages, userMessage], isThinking: true }));
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: "user",
+      text: trimmed,
+      createdAt: Date.now(),
+      status: "sent",
+    };
 
-        const history = get().messages;
-        const trip = get().trip;
-        const profile = useProfileStore.getState().profile ?? fallbackProfile;
+    set((state) => ({ messages: [...state.messages, userMessage], isThinking: true }));
 
-        try {
-          const reply = await getAssistantReply(trimmed, trip, history, profile);
+    try {
+      const reply = await getAssistantReply(trimmed);
 
-          const assistantMessage: ChatMessage = {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            text: reply.text,
-            createdAt: Date.now(),
-            status: reply.isError ? "error" : "sent",
-            attachments: reply.attachments,
-          };
+      const assistantMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        text: reply.text,
+        createdAt: Date.now(),
+        status: reply.isError ? "error" : "sent",
+        attachments: reply.attachments,
+      };
 
-          set((state) => ({
-            messages: [...state.messages, assistantMessage],
-            trip: reply.trip ?? state.trip,
-            isThinking: false,
-          }));
-        } catch {
-          const errorMessage: ChatMessage = {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            text: "Something went wrong on my end. Please try again.",
-            createdAt: Date.now(),
-            status: "error",
-          };
-          set((state) => ({ messages: [...state.messages, errorMessage], isThinking: false }));
-        }
-      },
+      set((state) => ({
+        messages: [...state.messages, assistantMessage],
+        trip: reply.trip ?? state.trip,
+        isThinking: false,
+      }));
+    } catch {
+      const errorMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        text: "Something went wrong on my end. Please try again.",
+        createdAt: Date.now(),
+        status: "error",
+      };
+      set((state) => ({ messages: [...state.messages, errorMessage], isThinking: false }));
+    }
+  },
 
-      reset: () => set({ messages: [], trip: null, isThinking: false }),
-    }),
-    { name: "waypoint-chat" },
-  ),
-);
+  reset: () => set({ messages: [], trip: null, isThinking: false }),
+}));

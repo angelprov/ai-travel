@@ -1,50 +1,34 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { TravelBudget, TravelPace, TravelInterest, UserProfile } from "../types";
+import type { TravelBudget, TravelInterest, TravelPace, UserProfile } from "../types";
+import { saveProfile } from "../lib/profileService";
+
+export interface OnboardingDraft {
+  name: string;
+  interests: TravelInterest[];
+  pace: TravelPace;
+  budget: TravelBudget;
+  dietary: string[];
+}
 
 interface ProfileState {
   profile: UserProfile | null;
   onboardingComplete: boolean;
-  setName: (name: string) => void;
-  setInterests: (interests: TravelInterest[]) => void;
-  setPace: (pace: TravelPace) => void;
-  setBudget: (budget: TravelBudget) => void;
-  setDietary: (dietary: string[]) => void;
-  completeOnboarding: (subscribed: boolean) => void;
-  resetOnboarding: () => void;
+  /** Populated from the server (signup/login/me response) — never from localStorage. */
+  hydrate: (profile: UserProfile, onboardingComplete: boolean) => void;
+  completeOnboarding: (draft: OnboardingDraft, subscribed: boolean) => Promise<void>;
+  reset: () => void;
 }
 
-const emptyProfile: UserProfile = {
-  name: "",
-  interests: [],
-  pace: "balanced",
-  budget: "mid-range",
-  dietary: [],
-  subscribed: false,
-};
+export const useProfileStore = create<ProfileState>()((set) => ({
+  profile: null,
+  onboardingComplete: false,
 
-export const useProfileStore = create<ProfileState>()(
-  persist(
-    (set) => ({
-      profile: null,
-      onboardingComplete: false,
-      setName: (name) =>
-        set((state) => ({ profile: { ...(state.profile ?? emptyProfile), name } })),
-      setInterests: (interests) =>
-        set((state) => ({ profile: { ...(state.profile ?? emptyProfile), interests } })),
-      setPace: (pace) =>
-        set((state) => ({ profile: { ...(state.profile ?? emptyProfile), pace } })),
-      setBudget: (budget) =>
-        set((state) => ({ profile: { ...(state.profile ?? emptyProfile), budget } })),
-      setDietary: (dietary) =>
-        set((state) => ({ profile: { ...(state.profile ?? emptyProfile), dietary } })),
-      completeOnboarding: (subscribed) =>
-        set((state) => ({
-          profile: { ...(state.profile ?? emptyProfile), subscribed },
-          onboardingComplete: true,
-        })),
-      resetOnboarding: () => set({ profile: null, onboardingComplete: false }),
-    }),
-    { name: "waypoint-profile" },
-  ),
-);
+  hydrate: (profile, onboardingComplete) => set({ profile, onboardingComplete }),
+
+  completeOnboarding: async (draft, subscribed) => {
+    const result = await saveProfile({ ...draft, subscribed, onboardingComplete: true });
+    set({ profile: result.profile, onboardingComplete: result.onboardingComplete });
+  },
+
+  reset: () => set({ profile: null, onboardingComplete: false }),
+}));

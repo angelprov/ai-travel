@@ -146,3 +146,22 @@ export interface LiveEventsResponse {
   events: Place[];
   source: "mock" | "live";
 }
+
+export interface AuthUser {
+  id: string;
+  email: string;
+}
+
+/** Response shape for signup/login/me — everything the client needs to hydrate its stores. */
+export interface HydrateResponse {
+  user: AuthUser;
+  profile: UserProfile;
+  onboardingComplete: boolean;
+  trip: Trip | null;
+  messages: ChatMessage[];
+}
+
+export interface ProfileUpdateResponse {
+  profile: UserProfile;
+  onboardingComplete: boolean;
+}

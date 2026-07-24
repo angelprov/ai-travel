@@ -1,0 +1,117 @@
+// Waypoint database schema. SQLite for zero-friction local dev — swap the
+// datasource provider/url to "postgresql" + a DATABASE_URL for production;
+// the schema itself is portable.
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  profile  Profile?
+  trip     Trip?
+  messages ChatMessage[]
+}
+
+model Profile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name               String   @default("")
+  /// JSON-encoded string[]
+  interests          String   @default("[]")
+  pace               String   @default("balanced")
+  budget             String   @default("mid-range")
+  /// JSON-encoded string[]
+  dietary            String   @default("[]")
+  subscribed         Boolean  @default(false)
+  onboardingComplete Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+}
+
+model Trip {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destinationId String
+  destination   String
+  startDate     String
+  endDate       String
+  travelerCount Int      @default(2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  days Day[]
+  stay Stay?
+}
+
+model Day {
+  id        String @id @default(cuid())
+  tripId    String
+  trip      Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  dayNumber Int
+  date      String
+  label     String
+
+  places Place[]
+
+  @@index([tripId])
+}
+
+model Place {
+  id             String  @id @default(cuid())
+  dayId          String
+  day            Day     @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  sortOrder      Int     @default(0)
+  name           String
+  category       String
+  rating         Float
+  duration       String
+  price          String
+  description    String
+  whySuggested   String
+  bookingAction  String
+  date           String?
+  timeSlot       String?
+  openHoursStart String?
+  openHoursEnd   String?
+
+  @@index([dayId])
+}
+
+model Stay {
+  id               String @id @default(cuid())
+  tripId           String @unique
+  trip             Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  name             String
+  source           String
+  neighborhood     String
+  pricePerNight    String
+  rating           Float
+  nights           Int
+  totalPrice       String
+  imageDescription String
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  text      String
+  status    String   @default("sent")
+  /// JSON-encoded AssistantAttachments snapshot, or null
+  attachments String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}

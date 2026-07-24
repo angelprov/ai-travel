@@ -20,11 +20,6 @@ const trackedSteps: Step[] = ["name", "interests", "pace", "budget", "dietary"];
 export function OnboardingScreen() {
   const navigate = useNavigate();
   const completeOnboarding = useProfileStore((state) => state.completeOnboarding);
-  const setName = useProfileStore((state) => state.setName);
-  const setInterests = useProfileStore((state) => state.setInterests);
-  const setPace = useProfileStore((state) => state.setPace);
-  const setBudget = useProfileStore((state) => state.setBudget);
-  const setDietary = useProfileStore((state) => state.setDietary);
 
   const [stepIndex, setStepIndex] = useState(0);
   const [name, setNameDraft] = useState("");
@@ -32,6 +27,8 @@ export function OnboardingScreen() {
   const [pace, setPaceDraft] = useState<TravelPace>("balanced");
   const [budget, setBudgetDraft] = useState<TravelBudget>("mid-range");
   const [dietary, setDietaryDraft] = useState<string[]>([]);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const step = steps[stepIndex];
   const goNext = () => setStepIndex((index) => Math.min(index + 1, steps.length - 1));
@@ -39,14 +36,17 @@ export function OnboardingScreen() {
 
   const progress = { total: trackedSteps.length, current: trackedSteps.indexOf(step) };
 
-  const handlePlanSelected = (subscribed: boolean) => {
-    setName(name);
-    setInterests(interests);
-    setPace(pace);
-    setBudget(budget);
-    setDietary(dietary);
-    completeOnboarding(subscribed);
-    navigate("/", { replace: true });
+  const handlePlanSelected = async (subscribed: boolean) => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await completeOnboarding({ name, interests, pace, budget, dietary }, subscribed);
+      navigate("/", { replace: true });
+    } catch {
+      setSaveError("Couldn't save your profile — check your connection and try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   switch (step) {
@@ -103,7 +103,7 @@ export function OnboardingScreen() {
         />
       );
     case "paywall":
-      return <PaywallStep onSelectPlan={handlePlanSelected} />;
+      return <PaywallStep onSelectPlan={handlePlanSelected} saving={saving} error={saveError} />;
     default:
       return null;
   }
