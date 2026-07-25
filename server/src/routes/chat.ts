@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { ChatRequestBody } from "../types.js";
-import { getClaudeReply } from "../services/claudeService.js";
+import { getAiReply } from "../services/aiService.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { getProfile } from "../repositories/profileRepo.js";
 import { getTrip, saveTrip } from "../repositories/tripRepo.js";
@@ -32,7 +32,7 @@ chatRouter.post("/", requireAuth, async (req, res) => {
 
     await appendMessage(userId, { role: "user", text: body.message });
 
-    const reply = await getClaudeReply(body.message, trip, history, profile);
+    const reply = await getAiReply(body.message, trip, history, profile);
     const updatedTrip = reply.trip ? await saveTrip(userId, reply.trip) : trip;
 
     await appendMessage(userId, {

@@ -53,7 +53,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: "1mb" }));
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, claudeConfigured: Boolean(process.env.ANTHROPIC_API_KEY) });
+  res.json({ ok: true, aiConfigured: Boolean(process.env.OPENROUTER_API_KEY) });
 });
 
 app.use("/api/auth", authRouter);

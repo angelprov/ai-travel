@@ -5,14 +5,15 @@ export const eventsRouter = Router();
 
 eventsRouter.get("/", async (req, res) => {
   const destinationId = String(req.query.destinationId ?? "");
+  const destination = String(req.query.destination ?? "");
   const date = String(req.query.date ?? "");
   const hour = req.query.hour !== undefined ? Number(req.query.hour) : undefined;
 
-  if (!destinationId || !date) {
-    res.status(400).json({ error: "destinationId and date query params are required" });
+  if (!destinationId || !destination || !date) {
+    res.status(400).json({ error: "destinationId, destination, and date query params are required" });
     return;
   }
 
-  const events = await getLiveEvents(destinationId, date, hour);
-  res.json({ destinationId, date, events, source: "mock" });
+  const result = await getLiveEvents(destinationId, destination, date, hour);
+  res.json({ destinationId, date, events: result.events, source: result.source });
 });

@@ -4,14 +4,14 @@ import { getForecast } from "../services/weatherService.js";
 export const weatherRouter = Router();
 
 weatherRouter.get("/", async (req, res) => {
-  const destinationId = String(req.query.destinationId ?? "");
+  const destination = String(req.query.destination ?? "");
   const date = String(req.query.date ?? "");
 
-  if (!destinationId || !date) {
-    res.status(400).json({ error: "destinationId and date query params are required" });
+  if (!destination || !date) {
+    res.status(400).json({ error: "destination and date query params are required" });
     return;
   }
 
-  const forecast = await getForecast(destinationId, date);
+  const forecast = await getForecast(destination, date);
   res.json(forecast);
 });

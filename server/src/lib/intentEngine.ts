@@ -5,21 +5,22 @@ import { getForecast } from "../services/weatherService.js";
 import { getLiveEvents } from "../services/eventsService.js";
 
 // ---------------------------------------------------------------------------
-// Mock conversation + editing engine. This is the "no ANTHROPIC_API_KEY"
+// Mock conversation + editing engine. This is the "no OPENROUTER_API_KEY"
 // fallback path — simple keyword/regex matching over the mock trip data,
 // but it performs *real* itinerary edits (swap/remove/add-day mutate the
 // actual Trip object), not just canned suggestions.
 //
-// claudeService.ts calls into the same tripMutations helpers when a real
-// key is configured, so both paths produce identically-shaped results.
+// aiService.ts calls into the same tripMutations helpers when a real key is
+// configured, so both paths produce identically-shaped results.
 // ---------------------------------------------------------------------------
 
-async function handleWeatherQuery(trip: Trip): Promise<AssistantMessage> {
+/** Exported so aiService.ts's check_weather tool reuses this instead of duplicating it. */
+export async function handleWeatherQuery(trip: Trip): Promise<AssistantMessage> {
   const firstDay = trip.days[0];
   if (!firstDay) {
     return { text: "I don't have any days planned yet to check the weather for." };
   }
-  const forecast = await getForecast(trip.destinationId, firstDay.date);
+  const forecast = await getForecast(trip.destination, firstDay.date);
   const conditionLabel = forecast.condition.replace("-", " ");
   return {
     text: `Around ${trip.destination.split(",")[0]} on ${firstDay.date}, expect ${conditionLabel} weather, highs near ${forecast.tempHighC}°C and lows near ${forecast.tempLowC}°C.`,
@@ -29,8 +30,8 @@ async function handleWeatherQuery(trip: Trip): Promise<AssistantMessage> {
 async function handleEventQuery(trip: Trip): Promise<AssistantMessage> {
   const destination = findDestinationById(trip.destinationId);
   const referenceDate = trip.days[trip.days.length - 1]?.date ?? trip.startDate;
-  const liveEvents = await getLiveEvents(trip.destinationId, referenceDate, 20);
-  const place = liveEvents[0] ?? destination.followups.eveningEvent;
+  const result = await getLiveEvents(trip.destinationId, trip.destination, referenceDate, 20);
+  const place = result.events[0] ?? destination.followups.eveningEvent;
 
   return {
     text: `If you're looking for something tonight, this is a strong pick:`,

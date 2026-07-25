@@ -7,9 +7,9 @@ import { API_URL } from "./apiClient";
 // (server/), which is server-authoritative: it loads the signed-in user's
 // profile, trip, and conversation history from the database (never trusting
 // anything the client sends beyond the new message text), then answers with
-// either real Claude (tool-use, see server/src/services/claudeService.ts) or
-// its mock intent engine, depending on whether ANTHROPIC_API_KEY is
-// configured there.
+// either a real model via OpenRouter (tool-use, see
+// server/src/services/aiService.ts) or its mock intent engine, depending on
+// whether OPENROUTER_API_KEY is configured there.
 //
 // Because everything now lives behind a real account, there's no meaningful
 // "offline" mode to fall back to — a network failure here surfaces as a

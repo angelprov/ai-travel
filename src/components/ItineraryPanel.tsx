@@ -40,7 +40,7 @@ function LocalPulse({ trip }: { trip: Trip }) {
     let cancelled = false;
     const referenceDate = trip.days[trip.days.length - 1]?.date ?? trip.startDate;
 
-    fetchLiveEvents(trip.destinationId, referenceDate).then((response) => {
+    fetchLiveEvents(trip.destinationId, trip.destination, referenceDate).then((response) => {
       if (!cancelled && response && response.events.length > 0) {
         setPulse(response.events[0]);
       }
@@ -49,7 +49,7 @@ function LocalPulse({ trip }: { trip: Trip }) {
     return () => {
       cancelled = true;
     };
-  }, [trip.destinationId, trip.days, trip.startDate]);
+  }, [trip.destinationId, trip.destination, trip.days, trip.startDate]);
 
   if (!pulse) return null;
 
@@ -68,13 +68,13 @@ function LocalPulse({ trip }: { trip: Trip }) {
 
 function DayWeatherSection({
   day,
-  destinationId,
+  destination,
   onSelectPlace,
   onSwapPlace,
   onRemovePlace,
 }: {
   day: Day;
-  destinationId: string;
+  destination: string;
   onSelectPlace: (place: Place) => void;
   onSwapPlace: (place: Place) => void;
   onRemovePlace: (place: Place) => void;
@@ -83,13 +83,13 @@ function DayWeatherSection({
 
   useEffect(() => {
     let cancelled = false;
-    fetchForecast(destinationId, day.date).then((result) => {
+    fetchForecast(destination, day.date).then((result) => {
       if (!cancelled && result) setForecast(result);
     });
     return () => {
       cancelled = true;
     };
-  }, [destinationId, day.date]);
+  }, [destination, day.date]);
 
   return (
     <div className="mb-6">
@@ -155,7 +155,7 @@ export function ItineraryPanel({ trip, onSelectPlace, onBookStay, onSwapPlace, o
         <DayWeatherSection
           key={day.id}
           day={day}
-          destinationId={trip.destinationId}
+          destination={trip.destination}
           onSelectPlace={onSelectPlace}
           onSwapPlace={onSwapPlace}
           onRemovePlace={onRemovePlace}

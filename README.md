@@ -18,8 +18,10 @@ chatting or by tapping swap/remove on any card, and it's saved to your account a
 - Prisma + SQLite for real persistence (users, profiles, trips, chat history) — swap the
   datasource to Postgres for production, same schema
 - Session auth: bcrypt password hashing + a JWT in an httpOnly cookie
-- `@anthropic-ai/sdk` for real Claude-driven replies (optional — falls back to a mock intent
-  engine when no API key is set)
+- AI itinerary generation via [OpenRouter](https://openrouter.ai/) (an OpenAI-compatible gateway
+  in front of many models, including Claude) — optional, falls back to a mock intent engine
+  bounded to 3 sample destinations when no key is set
+- Real weather (OpenWeatherMap) and real dated event listings (Ticketmaster) when keys are set
 
 **iOS** (`/ios`)
 - [Capacitor](https://capacitorjs.com/) wraps the same client app in a native WebView shell — no
@@ -88,30 +90,39 @@ without even needing that).
 ## What's real vs. mocked
 
 Auth and persistence are real and required — there's no offline/localStorage fallback anymore,
-since the whole point of this pass was real accounts. Everything else has a realistic mock behind
-the same interface a real provider would use, and needs no keys to run. See `server/.env.example`.
+since the whole point of an earlier pass was real accounts. AI/weather/events are real *when a key
+is set*, each with a graceful mock fallback behind the same interface. See `server/.env.example`.
 
 - **Accounts** (`server/src/routes/auth.ts`, `server/src/lib/auth.ts`) — real signup/login/logout,
   bcrypt-hashed passwords, JWT session cookie (httpOnly, not readable by client JS). `/api/chat` is
   server-authoritative: the client only ever sends the new message text — profile, trip, and
   history are loaded from the database by the authenticated user's id, never trusted from the
   request body.
-- **Chat + itinerary edits** (`server/src/services/claudeService.ts`) — with `ANTHROPIC_API_KEY`
-  set, every turn is sent to Claude with the full conversation history + current trip state (the
-  Messages API is stateless, so everything is resent each call) using tool-use to get back a
-  structured `{ reply, action, target }`. That action is applied via
-  `server/src/lib/tripMutations.ts` — the same swap/remove/add-day/generate helpers the mock path
-  uses, so both produce identically-shaped itinerary edits, and both get persisted to the database
-  the same way. No key → falls back to `server/src/lib/intentEngine.ts`, a keyword-based mock that
-  performs the same real mutations.
-- **Weather** (`server/src/services/weatherService.ts`) — deterministic mock forecast per
-  destination/date. `WEATHER_API_KEY` hand-off point documented inline (e.g. OpenWeatherMap).
-- **Live events** (`server/src/services/eventsService.ts`) — filters the mock destination data by
-  time-of-day ("what's on tonight" actually checks opening hours). `EVENTS_API_KEY` hand-off point
-  documented inline.
+- **Chat + itinerary generation/edits** (`server/src/services/aiService.ts`) — with
+  `OPENROUTER_API_KEY` set, every turn is sent to a real model via OpenRouter with the full
+  conversation history + current trip state (the underlying API is stateless, so everything is
+  resent each call), using structured tool calls to decide what to do. Itinerary generation is
+  **not** bound to a fixed destination list — the model invents a full, real-sounding itinerary
+  (day-by-day places + a stay) for wherever the traveler names, and swap/add-day generate new
+  content the same way rather than pulling from static data. Those mutations are applied via
+  `server/src/lib/tripMutations.ts`'s generic primitives (`replacePlaceAt`, `appendDay`), the same
+  ones the mock path's fixed-destination wrappers (`swapPlace`, `addExtraDay`) call internally — so
+  both paths mutate a trip identically regardless of where the content came from. No key → falls
+  back to `server/src/lib/intentEngine.ts`, a keyword-based mock limited to Rome/Lisbon/Kyoto.
+- **Weather** (`server/src/services/weatherService.ts`) — with `WEATHER_API_KEY` set, calls
+  OpenWeatherMap's forecast API for the actual destination. No key → deterministic mock forecast.
+- **Live events** (`server/src/services/eventsService.ts`) — with `EVENTS_API_KEY` set, calls the
+  Ticketmaster Discovery API for real, dated listings (coverage skews North America/Europe). This
+  is the one place real data matters most: an LLM can't know what's actually happening on a future
+  date, so the AI chat path prefers a live listing over its own invented suggestion whenever one's
+  available (`aiService.ts`'s `suggest_event` handling). No key → falls back to filtering the mock
+  destination's own places by time of day, which is only sensible for Rome/Lisbon/Kyoto — so the AI
+  path skips that fallback for any other destination rather than showing the wrong city's mock data.
 - **Bookings** (`src/lib/bookingService.ts`) — `getBookingUrl()` returns plausible, non-functional
   deep links for GetYourGuide/Airbnb/Booking.com. Booking modals are mocked "widget" frames
-  (GetYourGuide, Booking.com) or an honest hand-off card (Airbnb, which has no partner widget).
+  (GetYourGuide, Booking.com) or an honest hand-off card (Airbnb, which has no partner widget). Real
+  Ticketmaster events route to "Save to itinerary" rather than the GetYourGuide flow, since there's
+  no Ticketmaster checkout integration.
 - **Payments** — Waypoint Plus is still just a `subscribed` boolean set from the onboarding
   paywall, now persisted to your account. No Stripe integration yet.
 - **Activity/event media** (`src/lib/placeVisuals.ts`, `PlaceMedia`, `MediaLightbox`) — deterministic
@@ -144,7 +155,7 @@ server/
   prisma/       schema.prisma, migrations/
   src/
     routes/      auth.ts, profile.ts, chat.ts, weather.ts, events.ts
-    services/    claudeService.ts, weatherService.ts, eventsService.ts
+    services/    aiService.ts, weatherService.ts, eventsService.ts
     repositories/ profileRepo.ts, tripRepo.ts, chatRepo.ts (DB row <-> domain type mapping)
     lib/         auth.ts, intentEngine.ts, tripMutations.ts
     middleware/  requireAuth.ts
