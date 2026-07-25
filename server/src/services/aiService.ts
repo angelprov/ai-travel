@@ -115,7 +115,7 @@ const tools: ChatCompletionTool[] = [
   ),
   tool(
     "generate_trip",
-    "Generate a brand-new multi-day itinerary. Only call this when the traveler has no trip yet and has given (or implied) a destination.",
+    "Generate a multi-day itinerary, replacing any existing one entirely. Call this when the traveler has no trip yet and gives a destination, OR when they already have a trip but clearly ask to start over / rebuild / recreate the whole thing (as opposed to swap_place/remove_place/add_day, which only make incremental edits to the existing itinerary).",
     {
       reply: { type: "string", description: "1-2 sentence reply introducing the itinerary." },
       destination: { type: "string", description: "e.g. 'Porto, Portugal'" },
@@ -190,9 +190,10 @@ function buildSystemPrompt(trip: Trip | null, profile: UserProfile): string {
     `Today's date is ${today}. You are Waypoint's trip-planning assistant, replying inside a persistent chat thread that doubles as an editable itinerary.`,
     `Traveler profile: name=${profile.name || "unknown"}, interests=${profile.interests.join(", ") || "none given"}, pace=${profile.pace}, budget=${profile.budget}, dietary=${profile.dietary.join(", ") || "none"}.`,
     tripContext,
-    "Always call exactly one tool — never reply in plain text.",
-    "When generating a trip: infer the length from the traveler's message (e.g. '3 days'), defaulting to 3 days if unspecified. Pick real, well-known, specific places for the destination — actual named sights, restaurants, and neighborhoods, not generic placeholders. Vary categories across each day (mix sights/activities with a restaurant, and an event where it fits). Ground dates on or after today's date. Match pace (relaxed=2 stops/day, balanced=3, packed=4) and budget in your price/venue choices, and respect dietary needs in restaurant picks.",
+    "Always call exactly one tool — never reply in plain text, no matter how complex or multi-part the request. If nothing else fits, fall back to reply_only rather than answering without a tool call.",
+    "When generating a trip (new, or a full rebuild of an existing one): infer the length and structure from the traveler's message — respect explicit day counts, multi-city splits (e.g. '5 days in Barcelona then Madrid'), and date ranges exactly as given, defaulting to a sensible 3-day single-destination trip only when they've given none of that. Pick real, well-known, specific places for each destination — actual named sights, restaurants, and neighborhoods, not generic placeholders. Vary categories across each day (mix sights/activities with a restaurant, and an event where it fits). Ground dates on or after today's date unless the traveler gave explicit dates. Match pace (relaxed=2 stops/day, balanced=3, packed=4) and budget in your price/venue choices, and respect dietary needs in restaurant picks.",
     "For swap_place/add_day, generate content that fits the destination and the traveler's stated interests — don't repeat anything already in the itinerary.",
+    "Use generate_trip (not swap_place/remove_place one at a time) whenever the traveler asks to recreate, rebuild, start over, or replace the whole itinerary — including switching to a different destination or country entirely.",
   ].join("\n\n");
 }
 
@@ -386,7 +387,11 @@ export async function getAiReply(
 
     const toolCall = response.choices[0]?.message?.tool_calls?.[0];
     if (!toolCall || toolCall.type !== "function") {
-      return { text: "Sorry, I hit a snag putting that together. Could you try again?", isError: true };
+      console.error(
+        "[aiService] model replied without calling a tool (tool_choice: 'required' wasn't honored), falling back to mock engine. Model's reply:",
+        response.choices[0]?.message?.content,
+      );
+      return runIntentEngine(userMessage, trip, profile);
     }
 
     const args = JSON.parse(toolCall.function.arguments) as Record<string, unknown>;
