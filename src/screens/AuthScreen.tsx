@@ -55,7 +55,7 @@ export function AuthScreen() {
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-xl border border-hairline bg-card px-4 py-3 text-ink outline-none focus:border-brass"
+            className="w-full rounded-xl border border-hairline bg-card px-4 py-3 text-base text-ink outline-none focus:border-brass"
             placeholder="you@example.com"
           />
         </div>
@@ -72,7 +72,7 @@ export function AuthScreen() {
             minLength={8}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-xl border border-hairline bg-card px-4 py-3 text-ink outline-none focus:border-brass"
+            className="w-full rounded-xl border border-hairline bg-card px-4 py-3 text-base text-ink outline-none focus:border-brass"
             placeholder="At least 8 characters"
           />
         </div>

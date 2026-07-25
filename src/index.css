@@ -26,6 +26,13 @@
     height: 100%;
   }
 
+  html {
+    /* Belt-and-braces against any stray element widening the page past the
+       viewport on mobile — there's no legitimate reason for this app to
+       scroll horizontally. */
+    overflow-x: hidden;
+  }
+
   body {
     margin: 0;
     background-color: var(--color-parchment);

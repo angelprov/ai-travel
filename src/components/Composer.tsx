@@ -21,12 +21,14 @@ export function Composer({ onSend, isThinking, hasTrip }: ComposerProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex items-end gap-2 px-4 pb-4 pt-1">
+      {/* text-base (16px), not text-sm: iOS Safari/WKWebView auto-zooms on
+          focus for any input under 16px, and can get stuck zoomed in. */}
       <input
         value={value}
         onChange={(event) => setValue(event.target.value)}
         placeholder={hasTrip ? "Ask a follow-up..." : "Where do you want to go?"}
         aria-label="Message"
-        className="flex-1 rounded-full border border-hairline bg-card px-4 py-3 text-sm text-ink outline-none placeholder:text-ink/40 focus:border-brass"
+        className="flex-1 rounded-full border border-hairline bg-card px-4 py-3 text-base text-ink outline-none placeholder:text-ink/40 focus:border-brass"
       />
       <button
         type="submit"
