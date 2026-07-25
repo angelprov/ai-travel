@@ -23,7 +23,11 @@ import { getLiveEvents } from "./eventsService.js";
 // keyword-based mock intent engine (which still only knows Rome/Lisbon/Kyoto).
 // ---------------------------------------------------------------------------
 
-const DEFAULT_MODEL = "anthropic/claude-sonnet-4.5";
+// Free-tier by default so the app costs nothing to try out of the box.
+// Override with OPENROUTER_MODEL for a stronger paid model — tool-calling
+// reliability (and therefore itinerary quality/consistency) tends to be
+// better on larger paid models than on small free ones.
+const DEFAULT_MODEL = "inclusionai/ling-3.0-flash:free";
 
 let client: OpenAI | null = null;
 
