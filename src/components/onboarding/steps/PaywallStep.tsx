@@ -10,7 +10,13 @@ interface PaywallStepProps {
 
 export function PaywallStep({ onSelectPlan, saving, error }: PaywallStepProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-parchment px-6 py-10">
+    <div
+      className="flex min-h-screen flex-col bg-parchment px-6 py-10"
+      style={{
+        paddingTop: "calc(2.5rem + env(safe-area-inset-top))",
+        paddingBottom: "calc(2.5rem + env(safe-area-inset-bottom))",
+      }}
+    >
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
         <div className="rounded-3xl border border-hairline bg-card p-6 shadow-sm">
           <div className="flex items-center gap-2 text-brass-dark">

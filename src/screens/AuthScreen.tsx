@@ -34,7 +34,7 @@ export function AuthScreen() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-parchment px-6">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-parchment px-6 pt-safe pb-safe">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-brass">
         <Compass className="h-7 w-7" />
       </div>

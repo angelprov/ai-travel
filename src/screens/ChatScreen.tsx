@@ -64,7 +64,10 @@ export function ChatScreen() {
 
   return (
     <div className="flex h-dvh flex-col bg-parchment">
-      <header className="flex shrink-0 items-center gap-2 border-b border-hairline bg-parchment/95 px-4 py-3 backdrop-blur">
+      <header
+        className="flex shrink-0 items-center gap-2 border-b border-hairline bg-parchment/95 px-4 py-3 backdrop-blur"
+        style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
+      >
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-brass">
           <Compass className="h-4 w-4" />
         </div>
@@ -121,7 +124,10 @@ export function ChatScreen() {
             onBookStay={handleBookStay}
           />
 
-          <div className="shrink-0 border-t border-hairline bg-parchment">
+          <div
+            className="shrink-0 border-t border-hairline bg-parchment"
+            style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+          >
             {trip && <QuickPrompts onSelect={sendMessage} disabled={isThinking} />}
             <Composer onSend={sendMessage} isThinking={isThinking} hasTrip={Boolean(trip)} />
           </div>

@@ -32,6 +32,10 @@
     color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    /* Prevents the rubber-band bounce revealing blank space past the edges
+       in the Capacitor WebView (and pull-to-refresh-style overscroll on
+       mobile browsers generally). */
+    overscroll-behavior: none;
   }
 }
 
@@ -64,6 +68,16 @@
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: var(--color-hairline) transparent;
+  }
+
+  /* Safe-area insets for the iOS notch/Dynamic Island and home indicator
+     (and their Android equivalents). No-ops in a regular browser. */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 

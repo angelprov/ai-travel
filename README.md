@@ -21,6 +21,10 @@ chatting or by tapping swap/remove on any card, and it's saved to your account a
 - `@anthropic-ai/sdk` for real Claude-driven replies (optional — falls back to a mock intent
   engine when no API key is set)
 
+**iOS** (`/ios`)
+- [Capacitor](https://capacitorjs.com/) wraps the same client app in a native WebView shell — no
+  separate mobile codebase. Real Xcode project, installable on Simulator or a physical device.
+
 ## Running locally
 
 ```bash
@@ -39,6 +43,47 @@ Open the printed client URL — you'll land on `/login`. Sign up with any email/
 characters), which goes through onboarding once, then into the chat + itinerary view. Log out and
 back in (or reload) and everything — profile, trip, full chat history — is exactly as you left it,
 loaded from the database.
+
+## Running on iOS (Simulator)
+
+The app is wrapped for iOS with [Capacitor](https://capacitorjs.com/) (`ios/` is a real Xcode
+project, `capacitor.config.ts` is the bridge config) — no separate mobile codebase, it's the same
+`src/` running inside a native WebView shell.
+
+**Prerequisites:** Xcode installed, and the usual `npm install` from "Running locally" above.
+
+For local development, run the app against the Vite dev server (not a bundled build) so you get
+the same hot-reload loop as the web app, and — importantly — so login actually works (see the CORS
+note below):
+
+```bash
+npm run dev              # client (5173) + server (8787), same as web dev
+npm run ios:sync:dev     # points the native shell at http://localhost:5173 and syncs it in
+npm run ios:open         # opens ios/App/App.xcodeproj in Xcode
+```
+
+In Xcode, pick an iOS Simulator from the scheme/device dropdown (top bar) and hit **Run** (▶). The
+Simulator shares your Mac's network stack, so `localhost` inside it reaches your Mac's dev server
+directly — no IP juggling needed for the Simulator specifically.
+
+**Why `ios:sync:dev` matters, not just convenience:** a *bundled* Capacitor build (the default,
+production-style `npm run ios:sync`) loads the app from the `capacitor://localhost` scheme, which
+is a different origin than `http://localhost:8787` — and our session cookie is `SameSite=Lax`,
+which doesn't cross scheme boundaries on API calls. Live-reload mode instead points the WebView
+directly at `http://localhost:5173`, the *same* origin the web app already uses, so cookie auth
+works exactly as it does in a browser tab. A bundled build talking to a real deployed backend will
+need `SameSite=None; Secure` over HTTPS (or a token-based auth scheme) — not set up yet, since that
+depends on where/how you deploy.
+
+**Testing on a physical iPhone instead of the Simulator:** it doesn't share your Mac's `localhost`,
+so you'll need your Mac's LAN IP instead: set `CAP_SERVER_URL=http://<your-mac-ip>:5173` for the
+sync step, `CORS_EXTRA_ORIGINS=http://<your-mac-ip>:5173` in `server/.env`, and
+`VITE_API_URL=http://<your-mac-ip>:8787` in a root `.env`. Not tested yet — worth a pass together
+before you rely on it.
+
+Whenever you change anything under `src/`, just re-run `npm run ios:sync:dev` and hit Run again in
+Xcode (or use Xcode's own re-run — the WebView is pulling live from Vite, so most changes hot-reload
+without even needing that).
 
 ## What's real vs. mocked
 
@@ -106,6 +151,9 @@ server/
     db/          client.ts (Prisma singleton)
     mocks/       destinations.ts
     types.ts
+
+capacitor.config.ts   iOS/Android bridge config (webDir, live-reload server.url)
+ios/                  Generated Xcode project — open ios/App/App.xcodeproj
 ```
 
 ## Deploying for real

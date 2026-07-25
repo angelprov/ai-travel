@@ -12,7 +12,10 @@ interface OnboardingLayoutProps {
 export function OnboardingLayout({ children, onBack, progress, footer }: OnboardingLayoutProps) {
   return (
     <div className="flex min-h-screen flex-col bg-parchment">
-      <header className="flex h-16 shrink-0 items-center justify-between px-4">
+      <header
+        className="flex min-h-16 shrink-0 items-center justify-between px-4"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
         <div className="w-10">
           {onBack && (
             <button
@@ -33,7 +36,14 @@ export function OnboardingLayout({ children, onBack, progress, footer }: Onboard
         <div className="mx-auto w-full max-w-md">{children}</div>
       </main>
 
-      {footer && <footer className="mx-auto w-full max-w-md shrink-0 px-6 pb-10">{footer}</footer>}
+      {footer && (
+        <footer
+          className="mx-auto w-full max-w-md shrink-0 px-6 pb-10"
+          style={{ paddingBottom: "calc(2.5rem + env(safe-area-inset-bottom))" }}
+        >
+          {footer}
+        </footer>
+      )}
     </div>
   );
 }
