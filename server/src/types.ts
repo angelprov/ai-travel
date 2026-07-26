@@ -73,6 +73,8 @@ export interface Day {
   places: Place[];
 }
 
+export type TripStatus = "draft" | "active";
+
 export interface Trip {
   id: string;
   destinationId: string;
@@ -80,8 +82,34 @@ export interface Trip {
   startDate: string;
   endDate: string;
   travelerCount: number;
+  status: TripStatus;
   days: Day[];
-  stay: Stay;
+  /** Null for a freshly created draft trip before the first itinerary is generated. */
+  stay: Stay | null;
+}
+
+export interface StaySummary {
+  id: string;
+  name: string;
+  source: StaySource;
+  neighborhood: string;
+  pricePerNight: string;
+  rating: number;
+  imageDescription: string;
+}
+
+/** Lightweight trip shape for list views (Trips, Stays, Home) — no days/places. */
+export interface TripSummary {
+  id: string;
+  destinationId: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  travelerCount: number;
+  status: TripStatus;
+  createdAt: number;
+  updatedAt: number;
+  stay: StaySummary | null;
 }
 
 export type ChatRole = "user" | "assistant";
@@ -117,13 +145,17 @@ export interface AuthUser {
   email: string;
 }
 
-/** Response shape for signup/login/me — everything the client needs to hydrate its stores. */
+/**
+ * Response shape for signup/login/me. Deliberately light — full trip detail
+ * and chat history are fetched on demand by whichever screen needs them
+ * (GET /api/trips/:tripId, GET /api/trips/:tripId/chat), not eagerly loaded
+ * on every login now that a user can have many trips.
+ */
 export interface HydrateResponse {
   user: AuthUser;
   profile: UserProfile;
   onboardingComplete: boolean;
-  trip: Trip | null;
-  messages: ChatMessage[];
+  activeTripSummary: TripSummary | null;
 }
 
 export interface ProfileUpdateResponse {

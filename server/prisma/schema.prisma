@@ -18,7 +18,7 @@ model User {
   createdAt    DateTime @default(now())
 
   profile  Profile?
-  trip     Trip?
+  trips    Trip[]
   messages ChatMessage[]
 }
 
@@ -40,18 +40,23 @@ model Profile {
 
 model Trip {
   id            String   @id @default(cuid())
-  userId        String   @unique
+  userId        String
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   destinationId String
   destination   String
   startDate     String
   endDate       String
   travelerCount Int      @default(2)
+  /// "draft" (no days yet) | "active" (has itinerary content)
+  status        String   @default("draft")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  days Day[]
-  stay Stay?
+  days     Day[]
+  stay     Stay?
+  messages ChatMessage[]
+
+  @@index([userId, createdAt])
 }
 
 model Day {
@@ -106,6 +111,9 @@ model ChatMessage {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Nullable only for pre-migration rows with no trip to backfill from.
+  tripId    String?
+  trip      Trip?    @relation(fields: [tripId], references: [id], onDelete: Cascade)
   role      String
   text      String
   status    String   @default("sent")
@@ -113,5 +121,6 @@ model ChatMessage {
   attachments String?
   createdAt DateTime @default(now())
 
+  @@index([tripId, createdAt])
   @@index([userId, createdAt])
 }

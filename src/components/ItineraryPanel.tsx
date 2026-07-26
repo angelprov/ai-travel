@@ -147,9 +147,11 @@ export function ItineraryPanel({ trip, onSelectPlace, onBookStay, onSwapPlace, o
 
       <LocalPulse trip={trip} />
 
-      <div className="mb-6">
-        <StayCard stay={trip.stay} onBook={onBookStay} />
-      </div>
+      {trip.stay && (
+        <div className="mb-6">
+          <StayCard stay={trip.stay} onBook={onBookStay} />
+        </div>
+      )}
 
       {trip.days.map((day) => (
         <DayWeatherSection

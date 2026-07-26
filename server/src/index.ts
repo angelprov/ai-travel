@@ -3,7 +3,7 @@ import express from "express";
 import type { ErrorRequestHandler } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { chatRouter } from "./routes/chat.js";
+import { tripsRouter } from "./routes/trips.js";
 import { weatherRouter } from "./routes/weather.js";
 import { eventsRouter } from "./routes/events.js";
 import { authRouter } from "./routes/auth.js";
@@ -58,7 +58,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/profile", profileRouter);
-app.use("/api/chat", chatRouter);
+app.use("/api/trips", tripsRouter);
 app.use("/api/weather", weatherRouter);
 app.use("/api/events", eventsRouter);
 

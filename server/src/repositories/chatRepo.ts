@@ -21,9 +21,9 @@ function toMessage(row: MessageRow): ChatMessage {
   };
 }
 
-export async function getMessages(userId: string, limit = 100): Promise<ChatMessage[]> {
+export async function getMessages(tripId: string, limit = 100): Promise<ChatMessage[]> {
   const rows = await prisma.chatMessage.findMany({
-    where: { userId },
+    where: { tripId },
     orderBy: { createdAt: "asc" },
     take: limit,
   });
@@ -37,10 +37,11 @@ export interface NewMessageInput {
   attachments?: AssistantAttachments;
 }
 
-export async function appendMessage(userId: string, input: NewMessageInput): Promise<ChatMessage> {
+export async function appendMessage(userId: string, tripId: string, input: NewMessageInput): Promise<ChatMessage> {
   const row = await prisma.chatMessage.create({
     data: {
       userId,
+      tripId,
       role: input.role,
       text: input.text,
       status: input.status ?? "sent",

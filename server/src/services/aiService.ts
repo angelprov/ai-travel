@@ -115,7 +115,7 @@ const tools: ChatCompletionTool[] = [
   ),
   tool(
     "generate_trip",
-    "Generate a multi-day itinerary, replacing any existing one entirely. Call this when the traveler has no trip yet and gives a destination, OR when they already have a trip but clearly ask to start over / rebuild / recreate the whole thing (as opposed to swap_place/remove_place/add_day, which only make incremental edits to the existing itinerary).",
+    "Generate a multi-day itinerary for the current trip, replacing any existing itinerary it has entirely. Call this when the trip has no days yet and the traveler gives a destination, OR when they already have an itinerary for THIS SAME destination but clearly ask to start over / rebuild / replan the whole thing from scratch (as opposed to swap_place/remove_place/add_day, which only make incremental edits). Do NOT call this if the traveler names a different destination than the current trip — see the system prompt for how to handle that case instead.",
     {
       reply: { type: "string", description: "1-2 sentence reply introducing the itinerary." },
       destination: { type: "string", description: "e.g. 'Porto, Portugal'" },
@@ -177,14 +177,15 @@ const tools: ChatCompletionTool[] = [
 
 // --- Prompt building ----------------------------------------------------
 
-function buildSystemPrompt(trip: Trip | null, profile: UserProfile): string {
+function buildSystemPrompt(trip: Trip, profile: UserProfile): string {
   const today = new Date().toISOString().slice(0, 10);
 
-  const tripContext = trip
-    ? `They currently have a trip planned to ${trip.destination} (${trip.startDate} to ${trip.endDate}) with ${trip.days.length} day(s) already itemized:\n${trip.days
-        .map((day) => `Day ${day.dayNumber} (${day.date}): ${day.places.map((p) => `${p.name} [${p.category}]`).join(", ")}`)
-        .join("\n")}\nRefer to specific place names from this itinerary when relevant.`
-    : "They have not planned a trip yet — their next message is likely a trip brief.";
+  const tripContext =
+    trip.days.length > 0
+      ? `They currently have a trip planned to ${trip.destination} (${trip.startDate} to ${trip.endDate}) with ${trip.days.length} day(s) already itemized:\n${trip.days
+          .map((day) => `Day ${day.dayNumber} (${day.date}): ${day.places.map((p) => `${p.name} [${p.category}]`).join(", ")}`)
+          .join("\n")}\nRefer to specific place names from this itinerary when relevant.`
+      : "This is a new trip with no itinerary yet — their next message is likely a trip brief.";
 
   return [
     `Today's date is ${today}. You are Waypoint's trip-planning assistant, replying inside a persistent chat thread that doubles as an editable itinerary.`,
@@ -193,7 +194,7 @@ function buildSystemPrompt(trip: Trip | null, profile: UserProfile): string {
     "Always call exactly one tool — never reply in plain text, no matter how complex or multi-part the request. If nothing else fits, fall back to reply_only rather than answering without a tool call.",
     "When generating a trip (new, or a full rebuild of an existing one): infer the length and structure from the traveler's message — respect explicit day counts, multi-city splits (e.g. '5 days in Barcelona then Madrid'), and date ranges exactly as given, defaulting to a sensible 3-day single-destination trip only when they've given none of that. Pick real, well-known, specific places for each destination — actual named sights, restaurants, and neighborhoods, not generic placeholders. Vary categories across each day (mix sights/activities with a restaurant, and an event where it fits). Ground dates on or after today's date unless the traveler gave explicit dates. Match pace (relaxed=2 stops/day, balanced=3, packed=4) and budget in your price/venue choices, and respect dietary needs in restaurant picks.",
     "For swap_place/add_day, generate content that fits the destination and the traveler's stated interests — don't repeat anything already in the itinerary.",
-    "Use generate_trip (not swap_place/remove_place one at a time) whenever the traveler asks to recreate, rebuild, start over, or replace the whole itinerary — including switching to a different destination or country entirely.",
+    "Use generate_trip (not swap_place/remove_place one at a time) whenever the traveler asks to recreate, rebuild, start over, or replace the whole itinerary for the SAME destination they already have planned. If instead they name a different destination or country than the trip described above (e.g. they have Italy planned and ask to plan Spain instead), do NOT regenerate this trip in place — each trip is its own separate, saved record now. Use reply_only and tell them to use the app's \"New Trip\" action to start a fresh itinerary for that destination, keeping this one intact.",
   ].join("\n\n");
 }
 
@@ -289,6 +290,7 @@ function buildGeneratedTrip(args: {
     startDate: args.startDate,
     endDate: args.endDate,
     travelerCount: args.travelerCount ?? 2,
+    status: "active",
     days,
     stay,
   };
@@ -296,16 +298,17 @@ function buildGeneratedTrip(args: {
 
 // --- Applying the model's chosen tool call --------------------------------
 
-async function applyToolCall(name: string, args: Record<string, unknown>, trip: Trip | null): Promise<AssistantMessage> {
+async function applyToolCall(name: string, args: Record<string, unknown>, trip: Trip): Promise<AssistantMessage> {
   const reply = typeof args.reply === "string" ? args.reply : "";
+  const hasItinerary = trip.days.length > 0;
 
   switch (name) {
     case "generate_trip": {
       const newTrip = buildGeneratedTrip(args as Parameters<typeof buildGeneratedTrip>[0]);
-      return { text: reply, attachments: { stay: newTrip.stay, days: newTrip.days }, trip: newTrip };
+      return { text: reply, attachments: { stay: newTrip.stay ?? undefined, days: newTrip.days }, trip: newTrip };
     }
     case "swap_place": {
-      if (!trip) return { text: reply };
+      if (!hasItinerary) return { text: reply };
       const targetPlaceName = String(args.targetPlaceName ?? "");
       const newPlace = toPlaceInput(args.newPlace as RawPlace);
       const match = findPlaceByQuery(trip, targetPlaceName);
@@ -316,18 +319,18 @@ async function applyToolCall(name: string, args: Record<string, unknown>, trip: 
       return { text: reply, attachments: { place: result.added }, trip: result.trip };
     }
     case "remove_place": {
-      if (!trip) return { text: reply };
+      if (!hasItinerary) return { text: reply };
       const result = removePlace(trip, String(args.targetPlaceName ?? ""));
       return result.removed ? { text: reply, trip: result.trip } : { text: reply };
     }
     case "add_day": {
-      if (!trip) return { text: reply };
+      if (!hasItinerary) return { text: reply };
       const day = args.day as RawDay;
       const result = appendDay(trip, { label: day.label, date: day.date, places: day.places.map(toPlaceInput) });
       return { text: reply, attachments: { days: [result.day] }, trip: result.trip };
     }
     case "show_stay": {
-      if (!trip) return { text: reply };
+      if (!trip.stay) return { text: reply };
       return { text: reply, attachments: { stay: trip.stay } };
     }
     case "suggest_food": {
@@ -337,7 +340,7 @@ async function applyToolCall(name: string, args: Record<string, unknown>, trip: 
     case "suggest_event": {
       const modelPlace = toPlaceInput(args.place as RawPlace);
       const fallback: AssistantMessage = { text: reply, attachments: { place: { ...modelPlace, id: crypto.randomUUID() } } };
-      if (!trip) return fallback;
+      if (!hasItinerary) return fallback;
 
       // Prefer a real, dated event listing over the model's invented one —
       // this is the one place in the app where live data beats an LLM's
@@ -354,7 +357,7 @@ async function applyToolCall(name: string, args: Record<string, unknown>, trip: 
       return fallback;
     }
     case "check_weather": {
-      if (!trip) return { text: "I don't have a trip planned yet to check the weather for." };
+      if (!hasItinerary) return { text: "I don't have a trip planned yet to check the weather for." };
       return handleWeatherQuery(trip);
     }
     case "reply_only":
@@ -367,7 +370,7 @@ async function applyToolCall(name: string, args: Record<string, unknown>, trip: 
 
 export async function getAiReply(
   userMessage: string,
-  trip: Trip | null,
+  trip: Trip,
   history: ChatMessage[],
   profile: UserProfile,
 ): Promise<AssistantMessage> {

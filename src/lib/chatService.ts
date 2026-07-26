@@ -2,12 +2,12 @@ import type { AssistantMessage, ChatMessage, UserProfile } from "../types";
 import { API_URL } from "./apiClient";
 
 // ---------------------------------------------------------------------------
-// getAssistantReply() is the single seam this whole app talks through to get
-// an assistant response. It calls the Waypoint backend's POST /api/chat
-// (server/), which is server-authoritative: it loads the signed-in user's
-// profile, trip, and conversation history from the database (never trusting
-// anything the client sends beyond the new message text), then answers with
-// either a real model via OpenRouter (tool-use, see
+// Chat-turn calls for a single trip's thread. Every trip has its own scoped
+// chat now (POST/GET /api/trips/:tripId/chat, server/src/routes/trips.ts),
+// which is server-authoritative: it loads the signed-in user's profile,
+// that specific trip, and its conversation history from the database (never
+// trusting anything the client sends beyond the new message text), then
+// answers with either a real model via OpenRouter (tool-use, see
 // server/src/services/aiService.ts) or its mock intent engine, depending on
 // whether OPENROUTER_API_KEY is configured there.
 //
@@ -43,9 +43,16 @@ export function createWelcomeMessage(profile: UserProfile): ChatMessage {
   };
 }
 
-export async function getAssistantReply(userMessage: string): Promise<AssistantMessage> {
+export async function fetchTripMessages(tripId: string): Promise<ChatMessage[]> {
+  const response = await fetch(`${API_URL}/api/trips/${tripId}/chat`, { credentials: "include" });
+  if (!response.ok) throw new Error(`Backend responded with ${response.status}`);
+  const data = (await response.json()) as { messages: ChatMessage[] };
+  return data.messages;
+}
+
+export async function sendChatMessage(tripId: string, userMessage: string): Promise<AssistantMessage> {
   try {
-    const response = await fetch(`${API_URL}/api/chat`, {
+    const response = await fetch(`${API_URL}/api/trips/${tripId}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

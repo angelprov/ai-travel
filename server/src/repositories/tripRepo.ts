@@ -1,5 +1,5 @@
 import { prisma } from "../db/client.js";
-import type { Place, Stay, Trip } from "../types.js";
+import type { Place, Stay, StaySummary, Trip, TripStatus, TripSummary } from "../types.js";
 
 interface PlaceRow {
   id: string;
@@ -61,16 +61,61 @@ function toStay(row: StayRow): Stay {
   };
 }
 
-export async function getTrip(userId: string): Promise<Trip | null> {
-  const row = await prisma.trip.findUnique({
+function toStaySummary(row: StayRow): StaySummary {
+  return {
+    id: row.id,
+    name: row.name,
+    source: row.source as StaySummary["source"],
+    neighborhood: row.neighborhood,
+    pricePerNight: row.pricePerNight,
+    rating: row.rating,
+    imageDescription: row.imageDescription,
+  };
+}
+
+/** Lightweight list for Trips/Stays/Home — no days/places, just enough to render a row. */
+export async function listTrips(userId: string): Promise<TripSummary[]> {
+  const rows = await prisma.trip.findMany({
     where: { userId },
+    orderBy: { updatedAt: "desc" },
+    include: { stay: true },
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    destinationId: row.destinationId,
+    destination: row.destination,
+    startDate: row.startDate,
+    endDate: row.endDate,
+    travelerCount: row.travelerCount,
+    status: row.status as TripStatus,
+    createdAt: row.createdAt.getTime(),
+    updatedAt: row.updatedAt.getTime(),
+    stay: row.stay ? toStaySummary(row.stay) : null,
+  }));
+}
+
+/** The most recently touched trip, for Home's "continue planning" card. Null if the user has none yet. */
+export async function getMostRecentTrip(userId: string): Promise<TripSummary | null> {
+  const trips = await listTrips(userId);
+  return trips[0] ?? null;
+}
+
+/**
+ * Full trip detail, scoped to its owner — the `userId` filter is the
+ * authorization check, not just a lookup key, so a foreign tripId 404s the
+ * same way a nonexistent one does rather than leaking existence.
+ */
+export async function getTripById(userId: string, tripId: string): Promise<Trip | null> {
+  const row = await prisma.trip.findUnique({
+    where: { id: tripId, userId },
     include: {
       stay: true,
       days: { orderBy: { dayNumber: "asc" }, include: { places: { orderBy: { sortOrder: "asc" } } } },
     },
   });
 
-  if (!row || !row.stay) return null;
+  if (!row) return null;
 
   return {
     id: row.id,
@@ -79,6 +124,7 @@ export async function getTrip(userId: string): Promise<Trip | null> {
     startDate: row.startDate,
     endDate: row.endDate,
     travelerCount: row.travelerCount,
+    status: row.status as TripStatus,
     days: row.days.map((day) => ({
       id: day.id,
       dayNumber: day.dayNumber,
@@ -86,36 +132,98 @@ export async function getTrip(userId: string): Promise<Trip | null> {
       label: day.label,
       places: day.places.map(toPlace),
     })),
-    stay: toStay(row.stay),
+    stay: row.stay ? toStay(row.stay) : null,
   };
 }
 
-/** Replace strategy: the whole trip is swapped out on every mutation (cascades delete old days/places/stay). */
-export async function saveTrip(userId: string, trip: Trip): Promise<Trip> {
-  await prisma.trip.deleteMany({ where: { userId } });
+export interface CreateTripInput {
+  destination?: string;
+  destinationId?: string;
+  startDate?: string;
+  endDate?: string;
+  travelerCount?: number;
+}
 
-  await prisma.trip.create({
+/** Creates an empty draft trip (no days/stay yet) — the "New Trip" action. Real content lands via the first generate_trip chat turn. */
+export async function createTrip(userId: string, input: CreateTripInput): Promise<TripSummary> {
+  const row = await prisma.trip.create({
     data: {
       userId,
-      destinationId: trip.destinationId,
-      destination: trip.destination,
-      startDate: trip.startDate,
-      endDate: trip.endDate,
-      travelerCount: trip.travelerCount,
-      stay: {
-        create: {
-          name: trip.stay.name,
-          source: trip.stay.source,
-          neighborhood: trip.stay.neighborhood,
-          pricePerNight: trip.stay.pricePerNight,
-          rating: trip.stay.rating,
-          nights: trip.stay.nights,
-          totalPrice: trip.stay.totalPrice,
-          imageDescription: trip.stay.imageDescription,
-        },
+      destination: input.destination ?? "New trip",
+      destinationId: input.destinationId ?? "",
+      startDate: input.startDate ?? "",
+      endDate: input.endDate ?? "",
+      travelerCount: input.travelerCount ?? 2,
+      status: "draft",
+    },
+  });
+
+  return {
+    id: row.id,
+    destinationId: row.destinationId,
+    destination: row.destination,
+    startDate: row.startDate,
+    endDate: row.endDate,
+    travelerCount: row.travelerCount,
+    status: row.status as TripStatus,
+    createdAt: row.createdAt.getTime(),
+    updatedAt: row.updatedAt.getTime(),
+    stay: null,
+  };
+}
+
+export async function deleteTrip(userId: string, tripId: string): Promise<void> {
+  await prisma.trip.deleteMany({ where: { id: tripId, userId } });
+}
+
+/**
+ * Replace strategy: this trip's days/places/stay are swapped out whole on
+ * every mutation, but — unlike the old single-trip version — the `Trip` row
+ * itself is updated in place, never deleted and recreated. That matters now
+ * that `ChatMessage.tripId` cascades off `Trip`: deleting the trip row would
+ * silently wipe its entire chat history on every single itinerary edit.
+ * Everything is scoped to this one trip's id, so every *other* trip the
+ * user owns is untouched.
+ */
+export async function saveTrip(userId: string, tripId: string, trip: Trip): Promise<Trip> {
+  const owned = await prisma.trip.findUnique({ where: { id: tripId, userId }, select: { id: true } });
+  if (!owned) throw new Error("Trip not found");
+
+  await prisma.$transaction([
+    prisma.trip.update({
+      where: { id: tripId },
+      data: {
+        destinationId: trip.destinationId,
+        destination: trip.destination,
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        travelerCount: trip.travelerCount,
+        status: "active",
       },
-      days: {
-        create: trip.days.map((day) => ({
+    }),
+    prisma.day.deleteMany({ where: { tripId } }),
+    prisma.stay.deleteMany({ where: { tripId } }),
+    ...(trip.stay
+      ? [
+          prisma.stay.create({
+            data: {
+              tripId,
+              name: trip.stay.name,
+              source: trip.stay.source,
+              neighborhood: trip.stay.neighborhood,
+              pricePerNight: trip.stay.pricePerNight,
+              rating: trip.stay.rating,
+              nights: trip.stay.nights,
+              totalPrice: trip.stay.totalPrice,
+              imageDescription: trip.stay.imageDescription,
+            },
+          }),
+        ]
+      : []),
+    ...trip.days.map((day) =>
+      prisma.day.create({
+        data: {
+          tripId,
           dayNumber: day.dayNumber,
           date: day.date,
           label: day.label,
@@ -136,13 +244,13 @@ export async function saveTrip(userId: string, trip: Trip): Promise<Trip> {
               openHoursEnd: place.openHours?.end ?? null,
             })),
           },
-        })),
-      },
-    },
-  });
+        },
+      }),
+    ),
+  ]);
 
   // Re-fetch so returned ids/ordering reflect what's actually persisted.
-  const saved = await getTrip(userId);
+  const saved = await getTripById(userId, tripId);
   if (!saved) throw new Error("Failed to persist trip");
   return saved;
 }

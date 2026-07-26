@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Compass, MessageCircle, Map, LogOut } from "lucide-react";
 import { useProfileStore } from "../store/profileStore";
 import { useChatStore } from "../store/chatStore";
 import { useAuthStore } from "../store/authStore";
+import { createTrip } from "../lib/tripsService";
 import { ChatThread } from "../components/ChatThread";
 import { Composer } from "../components/Composer";
 import { QuickPrompts } from "../components/QuickPrompts";
@@ -16,29 +17,45 @@ type MobileTab = "chat" | "itinerary";
 
 export function ChatScreen() {
   const navigate = useNavigate();
+  const { tripId: routeTripId } = useParams<{ tripId: string }>();
   const profile = useProfileStore((state) => state.profile);
   const user = useAuthStore((state) => state.user);
+  const activeTripSummary = useAuthStore((state) => state.activeTripSummary);
   const logout = useAuthStore((state) => state.logout);
 
   const messages = useChatStore((state) => state.messages);
   const trip = useChatStore((state) => state.trip);
   const isThinking = useChatStore((state) => state.isThinking);
-  const initialize = useChatStore((state) => state.initialize);
+  const loadTrip = useChatStore((state) => state.loadTrip);
   const sendMessage = useChatStore((state) => state.sendMessage);
 
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [bookingTarget, setBookingTarget] = useState<BookingTarget | null>(null);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
+  const resolvingTrip = useRef(false);
+
+  // No :tripId in the URL (plain "/") — resolve one: reuse the most
+  // recently touched trip if the account has one, otherwise create a fresh
+  // draft, then settle the URL onto /trip/:tripId so it's bookmarkable and
+  // survives a reload.
+  useEffect(() => {
+    if (routeTripId || resolvingTrip.current) return;
+    resolvingTrip.current = true;
+
+    (async () => {
+      const id = activeTripSummary?.id ?? (await createTrip()).id;
+      navigate(`/trip/${id}`, { replace: true });
+    })().catch((error) => {
+      console.error("[ChatScreen] failed to resolve a trip:", error);
+      resolvingTrip.current = false;
+    });
+  }, [routeTripId, activeTripSummary, navigate]);
 
   useEffect(() => {
-    if (profile) initialize(profile);
-  }, [profile, initialize]);
+    if (routeTripId && profile) void loadTrip(routeTripId, profile);
+  }, [routeTripId, profile, loadTrip]);
 
-  useEffect(() => {
-    if (trip) navigate(`/trip/${trip.id}`, { replace: true });
-  }, [trip, navigate]);
-
-  if (!profile) return null;
+  if (!profile || !routeTripId) return null;
 
   const handleBookPlace = (place: Place) => {
     setSelectedPlace(null);
@@ -111,7 +128,7 @@ export function ChatScreen() {
         >
           <Map className="h-3.5 w-3.5" />
           Itinerary
-          {trip && <span className="h-1.5 w-1.5 rounded-full bg-brass" />}
+          {trip && trip.days.length > 0 && <span className="h-1.5 w-1.5 rounded-full bg-brass" />}
         </button>
       </div>
 
@@ -128,8 +145,8 @@ export function ChatScreen() {
             className="shrink-0 border-t border-hairline bg-parchment"
             style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
           >
-            {trip && <QuickPrompts onSelect={sendMessage} disabled={isThinking} />}
-            <Composer onSend={sendMessage} isThinking={isThinking} hasTrip={Boolean(trip)} />
+            {trip && trip.days.length > 0 && <QuickPrompts onSelect={sendMessage} disabled={isThinking} />}
+            <Composer onSend={sendMessage} isThinking={isThinking} hasTrip={Boolean(trip && trip.days.length > 0)} />
           </div>
         </div>
 

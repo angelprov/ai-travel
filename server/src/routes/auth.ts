@@ -4,8 +4,7 @@ import { prisma } from "../db/client.js";
 import { AUTH_COOKIE_NAME, hashPassword, sessionCookieOptions, signSessionToken, verifyPassword } from "../lib/auth.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { getProfile } from "../repositories/profileRepo.js";
-import { getTrip } from "../repositories/tripRepo.js";
-import { getMessages } from "../repositories/chatRepo.js";
+import { getMostRecentTrip } from "../repositories/tripRepo.js";
 import type { HydrateResponse } from "../types.js";
 
 export const authRouter = Router();
@@ -16,13 +15,12 @@ const credentialsSchema = z.object({
 });
 
 async function buildHydrateResponse(userId: string, email: string): Promise<HydrateResponse> {
-  const [{ profile, onboardingComplete }, trip, messages] = await Promise.all([
+  const [{ profile, onboardingComplete }, activeTripSummary] = await Promise.all([
     getProfile(userId),
-    getTrip(userId),
-    getMessages(userId),
+    getMostRecentTrip(userId),
   ]);
 
-  return { user: { id: userId, email }, profile, onboardingComplete, trip, messages };
+  return { user: { id: userId, email }, profile, onboardingComplete, activeTripSummary };
 }
 
 authRouter.post("/signup", async (req, res) => {

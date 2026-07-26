@@ -89,6 +89,7 @@ function handleFood(trip: Trip): AssistantMessage {
 }
 
 function handleStay(trip: Trip): AssistantMessage {
+  if (!trip.stay) return { text: "I don't have a stay booked for this trip yet." };
   const destination = findDestinationById(trip.destinationId);
   return {
     text: `Here's where you're staying in ${destination.name}:`,
@@ -96,14 +97,14 @@ function handleStay(trip: Trip): AssistantMessage {
   };
 }
 
-export async function runIntentEngine(userMessage: string, trip: Trip | null, _profile: UserProfile): Promise<AssistantMessage> {
+export async function runIntentEngine(userMessage: string, trip: Trip, _profile: UserProfile): Promise<AssistantMessage> {
   const lower = userMessage.toLowerCase();
 
-  if (!trip) {
+  if (trip.days.length === 0) {
     const newTrip = generateTrip(userMessage);
     return {
-      text: `Here's a first pass for ${newTrip.destination}: a ${newTrip.days.length}-day route with a stay in ${newTrip.stay.neighborhood}. Tap any card for details, or tell me what to change.`,
-      attachments: { stay: newTrip.stay, days: newTrip.days },
+      text: `Here's a first pass for ${newTrip.destination}: a ${newTrip.days.length}-day route with a stay in ${newTrip.stay?.neighborhood ?? "a great spot"}. Tap any card for details, or tell me what to change.`,
+      attachments: { stay: newTrip.stay ?? undefined, days: newTrip.days },
       trip: newTrip,
     };
   }
