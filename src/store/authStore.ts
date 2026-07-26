@@ -3,6 +3,7 @@ import type { AuthUser, HydrateResponse, TripSummary } from "../types";
 import { fetchCurrentSession, login as loginRequest, logout as logoutRequest, signup as signupRequest } from "../lib/authService";
 import { useProfileStore } from "./profileStore";
 import { useChatStore } from "./chatStore";
+import { useTripsStore } from "./tripsStore";
 
 type AuthStatus = "idle" | "loading" | "authenticated" | "unauthenticated";
 
@@ -75,6 +76,7 @@ export const useAuthStore = create<AuthState>()((set) => ({
     await logoutRequest();
     useProfileStore.getState().reset();
     useChatStore.getState().reset();
+    useTripsStore.getState().reset();
     set({ status: "unauthenticated", user: null, activeTripSummary: null, error: null });
   },
 

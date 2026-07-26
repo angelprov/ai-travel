@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Compass, MessageCircle, Map, LogOut } from "lucide-react";
+import { MessageCircle, Map } from "lucide-react";
 import { useProfileStore } from "../store/profileStore";
 import { useChatStore } from "../store/chatStore";
-import { useAuthStore } from "../store/authStore";
-import { createTrip } from "../lib/tripsService";
 import { ChatThread } from "../components/ChatThread";
 import { Composer } from "../components/Composer";
 import { QuickPrompts } from "../components/QuickPrompts";
@@ -17,11 +15,8 @@ type MobileTab = "chat" | "itinerary";
 
 export function ChatScreen() {
   const navigate = useNavigate();
-  const { tripId: routeTripId } = useParams<{ tripId: string }>();
+  const { tripId } = useParams<{ tripId: string }>();
   const profile = useProfileStore((state) => state.profile);
-  const user = useAuthStore((state) => state.user);
-  const activeTripSummary = useAuthStore((state) => state.activeTripSummary);
-  const logout = useAuthStore((state) => state.logout);
 
   const messages = useChatStore((state) => state.messages);
   const trip = useChatStore((state) => state.trip);
@@ -32,30 +27,14 @@ export function ChatScreen() {
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [bookingTarget, setBookingTarget] = useState<BookingTarget | null>(null);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
-  const resolvingTrip = useRef(false);
-
-  // No :tripId in the URL (plain "/") — resolve one: reuse the most
-  // recently touched trip if the account has one, otherwise create a fresh
-  // draft, then settle the URL onto /trip/:tripId so it's bookmarkable and
-  // survives a reload.
-  useEffect(() => {
-    if (routeTripId || resolvingTrip.current) return;
-    resolvingTrip.current = true;
-
-    (async () => {
-      const id = activeTripSummary?.id ?? (await createTrip()).id;
-      navigate(`/trip/${id}`, { replace: true });
-    })().catch((error) => {
-      console.error("[ChatScreen] failed to resolve a trip:", error);
-      resolvingTrip.current = false;
-    });
-  }, [routeTripId, activeTripSummary, navigate]);
 
   useEffect(() => {
-    if (routeTripId && profile) void loadTrip(routeTripId, profile);
-  }, [routeTripId, profile, loadTrip]);
+    if (tripId && profile) void loadTrip(tripId, profile);
+  }, [tripId, profile, loadTrip]);
 
-  if (!profile || !routeTripId) return null;
+  if (!profile || !tripId) return null;
+
+  const hasItinerary = Boolean(trip && trip.days.length > 0);
 
   const handleBookPlace = (place: Place) => {
     setSelectedPlace(null);
@@ -74,38 +53,30 @@ export function ChatScreen() {
     void sendMessage(`Remove ${place.name} from the itinerary`);
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login", { replace: true });
-  };
-
   return (
-    <div className="flex h-dvh flex-col bg-parchment">
+    <div className="flex h-full flex-col bg-parchment">
       <header
         className="flex shrink-0 items-center gap-2 border-b border-hairline bg-parchment/95 px-4 py-3 backdrop-blur"
         style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-brass">
-          <Compass className="h-4 w-4" />
-        </div>
-        <div>
-          <div className="font-display text-lg leading-tight text-ink">Waypoint</div>
-          {trip && (
+        <button
+          type="button"
+          onClick={() => navigate("/trips")}
+          aria-label="Back to trips"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-ink/40 transition-colors hover:bg-ink/5 hover:text-ink"
+        >
+          <Map className="h-4 w-4" />
+        </button>
+        <div className="min-w-0">
+          <div className="truncate font-display text-lg leading-tight text-ink">
+            {hasItinerary ? trip!.destination : "New trip"}
+          </div>
+          {hasItinerary && (
             <div className="font-mono text-[11px] uppercase tracking-wide text-ink/50">
-              {trip.destination}
+              {trip!.startDate} – {trip!.endDate}
             </div>
           )}
         </div>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          title={user?.email}
-          aria-label="Log out"
-          className="ml-auto flex h-8 w-8 items-center justify-center rounded-full text-ink/40 transition-colors hover:bg-ink/5 hover:text-ink"
-        >
-          <LogOut className="h-4 w-4" />
-        </button>
       </header>
 
       <div className="flex shrink-0 border-b border-hairline md:hidden">
@@ -128,7 +99,7 @@ export function ChatScreen() {
         >
           <Map className="h-3.5 w-3.5" />
           Itinerary
-          {trip && trip.days.length > 0 && <span className="h-1.5 w-1.5 rounded-full bg-brass" />}
+          {hasItinerary && <span className="h-1.5 w-1.5 rounded-full bg-brass" />}
         </button>
       </div>
 
@@ -145,8 +116,8 @@ export function ChatScreen() {
             className="shrink-0 border-t border-hairline bg-parchment"
             style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
           >
-            {trip && trip.days.length > 0 && <QuickPrompts onSelect={sendMessage} disabled={isThinking} />}
-            <Composer onSend={sendMessage} isThinking={isThinking} hasTrip={Boolean(trip && trip.days.length > 0)} />
+            {hasItinerary && <QuickPrompts onSelect={sendMessage} disabled={isThinking} />}
+            <Composer onSend={sendMessage} isThinking={isThinking} hasTrip={hasItinerary} />
           </div>
         </div>
 

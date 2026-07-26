@@ -7,6 +7,11 @@ import { useProfileStore } from "./store/profileStore";
 import { AuthScreen } from "./screens/AuthScreen";
 import { OnboardingScreen } from "./screens/OnboardingScreen";
 import { ChatScreen } from "./screens/ChatScreen";
+import { HomeScreen } from "./screens/HomeScreen";
+import { TripsScreen } from "./screens/TripsScreen";
+import { StaysScreen } from "./screens/StaysScreen";
+import { ProfileScreen } from "./screens/ProfileScreen";
+import { AppShell } from "./components/AppShell";
 
 function LoadingScreen() {
   return (
@@ -18,7 +23,7 @@ function LoadingScreen() {
   );
 }
 
-/** Chat + itinerary: needs a signed-in, onboarded user. */
+/** Home/Trips/Stays/Profile/trip detail: needs a signed-in, onboarded user. */
 function RequireAuth({ children }: { children: ReactElement }) {
   const status = useAuthStore((state) => state.status);
   const onboardingComplete = useProfileStore((state) => state.onboardingComplete);
@@ -36,7 +41,7 @@ function RequireOnboardingInProgress({ children }: { children: ReactElement }) {
 
   if (status === "idle" || status === "loading") return <LoadingScreen />;
   if (status === "unauthenticated") return <Navigate to="/login" replace />;
-  if (onboardingComplete) return <Navigate to="/" replace />;
+  if (onboardingComplete) return <Navigate to="/home" replace />;
   return children;
 }
 
@@ -46,7 +51,7 @@ function RedirectIfAuthenticated({ children }: { children: ReactElement }) {
   const onboardingComplete = useProfileStore((state) => state.onboardingComplete);
 
   if (status === "idle" || status === "loading") return <LoadingScreen />;
-  if (status === "authenticated") return <Navigate to={onboardingComplete ? "/" : "/welcome"} replace />;
+  if (status === "authenticated") return <Navigate to={onboardingComplete ? "/home" : "/welcome"} replace />;
   return children;
 }
 
@@ -77,22 +82,19 @@ function App() {
           }
         />
         <Route
-          path="/"
           element={
             <RequireAuth>
-              <ChatScreen />
+              <AppShell />
             </RequireAuth>
           }
-        />
-        <Route
-          path="/trip/:tripId"
-          element={
-            <RequireAuth>
-              <ChatScreen />
-            </RequireAuth>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        >
+          <Route path="/home" element={<HomeScreen />} />
+          <Route path="/trips" element={<TripsScreen />} />
+          <Route path="/trips/:tripId" element={<ChatScreen />} />
+          <Route path="/stays" element={<StaysScreen />} />
+          <Route path="/profile" element={<ProfileScreen />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </BrowserRouter>
   );
