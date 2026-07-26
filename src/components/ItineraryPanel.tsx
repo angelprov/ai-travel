@@ -122,7 +122,10 @@ function DayWeatherSection({
 }
 
 export function ItineraryPanel({ trip, onSelectPlace, onBookStay, onSwapPlace, onRemovePlace }: ItineraryPanelProps) {
-  if (!trip) {
+  // A freshly created draft trip is a real (non-null) Trip record with no
+  // days/destination yet — treat it the same as "no trip" rather than
+  // rendering LocalPulse/StayCard against empty destination/date fields.
+  if (!trip || trip.days.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-ink/5 text-ink/30">
