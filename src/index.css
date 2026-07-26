@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface: #fafafa;
+  --color-ink: #18181b;
+  --color-accent: #4f46e5;
+  --color-accent-dark: #4338ca;
+  --color-teal: #0d9488;
+  --color-teal-dark: #0f766e;
+  --color-danger: #dc2626;
+  --color-card: #ffffff;
+  --color-line: #e4e4e7;
+
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html {
+    /* Belt-and-braces against any stray element widening the page past the
+       viewport on mobile — there's no legitimate reason for this app to
+       scroll horizontally. */
+    overflow-x: hidden;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    /* Prevents the rubber-band bounce revealing blank space past the edges
+       in the Capacitor WebView (and pull-to-refresh-style overscroll on
+       mobile browsers generally). */
+    overscroll-behavior: none;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+
+  /* Safe-area insets for the iOS notch/Dynamic Island and home indicator
+     (and their Android equivalents). No-ops in a regular browser. */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
