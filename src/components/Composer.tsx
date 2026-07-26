@@ -28,13 +28,13 @@ export function Composer({ onSend, isThinking, hasTrip }: ComposerProps) {
         onChange={(event) => setValue(event.target.value)}
         placeholder={hasTrip ? "Ask a follow-up..." : "Where do you want to go?"}
         aria-label="Message"
-        className="flex-1 rounded-full border border-hairline bg-card px-4 py-3 text-base text-ink outline-none placeholder:text-ink/40 focus:border-brass"
+        className="flex-1 rounded-full border border-line bg-card px-4 py-3 text-base text-ink outline-none placeholder:text-ink/40 focus:border-accent"
       />
       <button
         type="submit"
         disabled={isThinking || !value.trim()}
         aria-label="Send message"
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brass text-ink transition-colors hover:bg-brass-dark disabled:cursor-not-allowed disabled:bg-brass/40"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:bg-accent/40"
       >
         <ArrowUp className="h-5 w-5" />
       </button>

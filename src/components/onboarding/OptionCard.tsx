@@ -12,7 +12,7 @@ export function OptionCard({ label, description, selected, onClick }: OptionCard
       onClick={onClick}
       aria-pressed={selected}
       className={`w-full rounded-2xl border px-5 py-4 text-left transition-colors ${
-        selected ? "border-brass bg-brass/15" : "border-hairline bg-card hover:border-brass/60"
+        selected ? "border-accent bg-accent/15" : "border-line bg-card hover:border-accent/60"
       }`}
     >
       <div className="font-display text-lg text-ink">{label}</div>

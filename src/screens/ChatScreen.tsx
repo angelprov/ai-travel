@@ -54,9 +54,9 @@ export function ChatScreen() {
   };
 
   return (
-    <div className="flex h-full flex-col bg-parchment">
+    <div className="flex h-full flex-col bg-surface">
       <header
-        className="flex shrink-0 items-center gap-2 border-b border-hairline bg-parchment/95 px-4 py-3 backdrop-blur"
+        className="flex shrink-0 items-center gap-2 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur"
         style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
       >
         <button
@@ -72,19 +72,19 @@ export function ChatScreen() {
             {hasItinerary ? trip!.destination : "New trip"}
           </div>
           {hasItinerary && (
-            <div className="font-mono text-[11px] uppercase tracking-wide text-ink/50">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-ink/50">
               {trip!.startDate} – {trip!.endDate}
             </div>
           )}
         </div>
       </header>
 
-      <div className="flex shrink-0 border-b border-hairline md:hidden">
+      <div className="flex shrink-0 border-b border-line md:hidden">
         <button
           type="button"
           onClick={() => setMobileTab("chat")}
-          className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wide ${
-            mobileTab === "chat" ? "border-b-2 border-brass text-ink" : "text-ink/40"
+          className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-semibold uppercase tracking-wide ${
+            mobileTab === "chat" ? "border-b-2 border-accent text-ink" : "text-ink/40"
           }`}
         >
           <MessageCircle className="h-3.5 w-3.5" />
@@ -93,13 +93,13 @@ export function ChatScreen() {
         <button
           type="button"
           onClick={() => setMobileTab("itinerary")}
-          className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wide ${
-            mobileTab === "itinerary" ? "border-b-2 border-brass text-ink" : "text-ink/40"
+          className={`flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs font-semibold uppercase tracking-wide ${
+            mobileTab === "itinerary" ? "border-b-2 border-accent text-ink" : "text-ink/40"
           }`}
         >
           <Map className="h-3.5 w-3.5" />
           Itinerary
-          {hasItinerary && <span className="h-1.5 w-1.5 rounded-full bg-brass" />}
+          {hasItinerary && <span className="h-1.5 w-1.5 rounded-full bg-accent" />}
         </button>
       </div>
 
@@ -113,7 +113,7 @@ export function ChatScreen() {
           />
 
           <div
-            className="shrink-0 border-t border-hairline bg-parchment"
+            className="shrink-0 border-t border-line bg-surface"
             style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
           >
             {hasItinerary && <QuickPrompts onSelect={sendMessage} disabled={isThinking} />}
@@ -122,7 +122,7 @@ export function ChatScreen() {
         </div>
 
         <div
-          className={`w-full shrink-0 flex-col border-hairline bg-parchment md:flex md:w-[380px] md:border-l lg:w-[420px] ${
+          className={`w-full shrink-0 flex-col border-line bg-surface md:flex md:w-[380px] md:border-l lg:w-[420px] ${
             mobileTab === "itinerary" ? "flex" : "hidden"
           }`}
         >

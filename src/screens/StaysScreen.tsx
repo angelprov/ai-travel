@@ -35,27 +35,27 @@ export function StaysScreen() {
               key={trip.id}
               type="button"
               onClick={() => navigate(`/trips/${trip.id}`)}
-              className="w-full overflow-hidden rounded-2xl border border-hairline bg-card text-left shadow-sm transition-colors hover:border-brass/50"
+              className="w-full overflow-hidden rounded-2xl border border-line bg-card text-left shadow-sm transition-colors hover:border-accent/50"
             >
               <div className="relative h-20 w-full" style={{ backgroundImage: getPlaceGradient(stay.id) }}>
                 <BedDouble className="pointer-events-none absolute -bottom-2 -right-2 h-16 w-16 text-white/15" strokeWidth={1.5} />
-                <span className="absolute left-2 top-2 rounded-full bg-ink/50 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-white">
+                <span className="absolute left-2 top-2 rounded-full bg-ink/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                   {trip.destination}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium text-ink">{stay.name}</div>
-                  <div className="mt-0.5 flex items-center gap-2 font-mono text-[11px] text-ink/50">
+                  <div className="mt-0.5 flex items-center gap-2 text-[11px] text-ink/50">
                     <span>{stay.neighborhood}</span>
                     <span className="flex items-center gap-0.5">
-                      <Star className="h-3 w-3 fill-brass text-brass" />
+                      <Star className="h-3 w-3 fill-accent text-accent" />
                       {stay.rating.toFixed(1)}
                     </span>
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="font-mono text-xs text-ink/50">{getSourceLabel(stay.source)}</span>
+                  <span className="text-xs text-ink/50">{getSourceLabel(stay.source)}</span>
                   <ArrowRight className="h-4 w-4 text-ink/30" />
                 </div>
               </div>

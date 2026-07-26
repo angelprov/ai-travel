@@ -11,7 +11,7 @@ interface OnboardingLayoutProps {
 
 export function OnboardingLayout({ children, onBack, progress, footer }: OnboardingLayoutProps) {
   return (
-    <div className="flex min-h-screen flex-col bg-parchment">
+    <div className="flex min-h-screen flex-col bg-surface">
       <header
         className="flex min-h-16 shrink-0 items-center justify-between px-4"
         style={{ paddingTop: "env(safe-area-inset-top)" }}

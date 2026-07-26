@@ -1,22 +1,29 @@
 # Waypoint
 
-An AI travel planner with real accounts. Sign up, onboard once, then describe a trip in a
-persistent chat thread with an always-visible, live itinerary panel next to it — edit it by
-chatting or by tapping swap/remove on any card, and it's saved to your account as you go.
+An AI travel planner with real accounts. Sign up, onboard once, then plan any number of trips —
+each with its own persistent chat thread and always-visible, live itinerary panel next to it. Edit
+an itinerary by chatting or by tapping swap/remove on any card, and it's saved to your account as
+you go. A bottom-tab (mobile) / sidebar (desktop) nav shell ties it together: **Home** (continue
+your most recent trip, or start a new one), **Trips** (full history), **Stays** (a rollup of every
+trip's accommodation), and **Profile** (account + preferences).
 
 ## Stack
 
 **Client** (`/`)
 - Vite + React + TypeScript
-- Tailwind CSS v4
-- React Router (`/login`, `/welcome`, `/`, `/trip/:tripId`)
-- Zustand for auth/profile/chat state, hydrated from the server on load (no localStorage)
+- Tailwind CSS v4 — clean, minimal palette (neutral surfaces, a single indigo accent), Inter
+  throughout (see `src/index.css`)
+- React Router: `/login`, `/welcome`, then behind an `AppShell` layout —
+  `/home`, `/trips`, `/trips/:tripId` (chat + itinerary for one trip), `/stays`, `/profile`
+- Zustand for auth/profile/trips/chat state, hydrated from the server on load (no localStorage)
 - lucide-react icons
 
 **Server** (`/server`)
 - Node + Express + TypeScript
 - Prisma + SQLite for real persistence (users, profiles, trips, chat history) — swap the
-  datasource to Postgres for production, same schema
+  datasource to Postgres for production, same schema. A user can have many trips; each trip owns
+  its own itinerary and chat history (`Trip`, scoped by `userId`; `ChatMessage`, scoped by
+  `tripId`)
 - Session auth: bcrypt password hashing + a JWT in an httpOnly cookie
 - AI itinerary generation via [OpenRouter](https://openrouter.ai/) (an OpenAI-compatible gateway
   in front of many models, including Claude) — optional, falls back to a mock intent engine
@@ -42,9 +49,9 @@ npx prisma migrate dev   # creates prisma/dev.db and applies migrations
 ```
 
 Open the printed client URL — you'll land on `/login`. Sign up with any email/password (8+
-characters), which goes through onboarding once, then into the chat + itinerary view. Log out and
-back in (or reload) and everything — profile, trip, full chat history — is exactly as you left it,
-loaded from the database.
+characters), which goes through onboarding once, then into `/home`. Tap "New trip" to create one
+and start chatting. Log out and back in (or reload) and everything — profile, every trip, full
+per-trip chat history — is exactly as you left it, loaded from the database.
 
 ## Running on iOS (Simulator)
 
@@ -94,10 +101,11 @@ since the whole point of an earlier pass was real accounts. AI/weather/events ar
 is set*, each with a graceful mock fallback behind the same interface. See `server/.env.example`.
 
 - **Accounts** (`server/src/routes/auth.ts`, `server/src/lib/auth.ts`) — real signup/login/logout,
-  bcrypt-hashed passwords, JWT session cookie (httpOnly, not readable by client JS). `/api/chat` is
-  server-authoritative: the client only ever sends the new message text — profile, trip, and
-  history are loaded from the database by the authenticated user's id, never trusted from the
-  request body.
+  bcrypt-hashed passwords, JWT session cookie (httpOnly, not readable by client JS).
+  `POST /api/trips/:tripId/chat` is server-authoritative: the client only ever sends the new
+  message text — trip identity comes from the validated `:tripId` path param, and the profile and
+  that trip's history are loaded from the database by the authenticated user's id, never trusted
+  from the request body.
 - **Chat + itinerary generation/edits** (`server/src/services/aiService.ts`) — with
   `OPENROUTER_API_KEY` set, every turn is sent to a real model via OpenRouter with the full
   conversation history + current trip state (the underlying API is stateless, so everything is
@@ -107,8 +115,12 @@ is set*, each with a graceful mock fallback behind the same interface. See `serv
   content the same way rather than pulling from static data. Those mutations are applied via
   `server/src/lib/tripMutations.ts`'s generic primitives (`replacePlaceAt`, `appendDay`), the same
   ones the mock path's fixed-destination wrappers (`swapPlace`, `addExtraDay`) call internally — so
-  both paths mutate a trip identically regardless of where the content came from. No key → falls
-  back to `server/src/lib/intentEngine.ts`, a keyword-based mock limited to Rome/Lisbon/Kyoto.
+  both paths mutate a trip identically regardless of where the content came from. Each trip is its
+  own isolated database record now (`Trip.userId` is no longer unique, `ChatMessage.tripId` scopes
+  history per-trip) — a full rebuild via chat only ever replaces *that* trip's itinerary, and the
+  model is steered to point travelers at the "New trip" action instead of overwriting the current
+  trip when they name a different destination (`aiService.ts`'s system prompt). No key → falls back
+  to `server/src/lib/intentEngine.ts`, a keyword-based mock limited to Rome/Lisbon/Kyoto.
 - **Weather** (`server/src/services/weatherService.ts`) — with `WEATHER_API_KEY` set, calls
   OpenWeatherMap's forecast API for the actual destination. No key → deterministic mock forecast.
 - **Live events** (`server/src/services/eventsService.ts`) — with `EVENTS_API_KEY` set, calls the
@@ -137,24 +149,35 @@ the live itinerary panel never disagree, and both are saved to your account. Sup
 intents: swap a named place, remove a named place, add another day, ask about weather, ask for
 food/tonight suggestions, resurface the stay.
 
+## Visual system
+
+Clean, minimal, chat-app style: neutral surfaces (`--color-surface`, `--color-card`), a single
+indigo accent (`--color-accent`) for primary actions and highlights, Inter throughout, no
+monospace/uppercase-label motif. All tokens live in `src/index.css`'s `@theme` block — that's the
+one place to retheme.
+
 ## Project structure
 
 ```
 src/
-  components/   ChatThread, MessageBubble, Composer, QuickPrompts, TypingIndicator,
+  components/   AppShell (nav shell: bottom tabs on mobile, sidebar on desktop),
+                ChatThread, MessageBubble, Composer, QuickPrompts, TypingIndicator,
                 PlaceCard, DayCard, StayCard, PlaceDetailSheet, BookingModal,
                 PlaceMedia, MediaLightbox, ItineraryPanel, onboarding/
-  screens/      AuthScreen, OnboardingScreen, ChatScreen (split view: chat + itinerary panel)
-  lib/          authService.ts, profileService.ts, chatService.ts, bookingService.ts,
-                weatherService.ts, eventsService.ts, apiClient.ts, placeVisuals.ts,
-                onboardingOptions.ts
-  store/        authStore.ts, profileStore.ts, chatStore.ts
+  screens/      AuthScreen, OnboardingScreen, HomeScreen, TripsScreen, StaysScreen,
+                ProfileScreen, ChatScreen (one trip's chat + itinerary split view)
+  lib/          authService.ts, profileService.ts, chatService.ts, tripsService.ts,
+                bookingService.ts, weatherService.ts, eventsService.ts, apiClient.ts,
+                placeVisuals.ts, onboardingOptions.ts
+  store/        authStore.ts, profileStore.ts, tripsStore.ts, chatStore.ts (trip-scoped:
+                loadTrip(tripId) fetches on navigate rather than caching every trip)
   types.ts
 
 server/
   prisma/       schema.prisma, migrations/
   src/
-    routes/      auth.ts, profile.ts, chat.ts, weather.ts, events.ts
+    routes/      auth.ts, profile.ts, trips.ts (list/create/get/delete a trip, plus
+                 GET/POST /api/trips/:tripId/chat), weather.ts, events.ts
     services/    aiService.ts, weatherService.ts, eventsService.ts
     repositories/ profileRepo.ts, tripRepo.ts, chatRepo.ts (DB row <-> domain type mapping)
     lib/         auth.ts, intentEngine.ts, tripMutations.ts

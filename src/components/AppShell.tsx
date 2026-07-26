@@ -16,11 +16,11 @@ function navLinkClass(isActive: boolean) {
 
 export function AppShell() {
   return (
-    <div className="flex h-dvh flex-col bg-parchment md:flex-row">
+    <div className="flex h-dvh flex-col bg-surface md:flex-row">
       {/* Desktop sidebar */}
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-hairline bg-parchment md:flex">
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-line bg-surface md:flex">
         <div className="flex items-center gap-2 px-5 py-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-brass">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-ink text-white">
             <Compass className="h-4 w-4" />
           </div>
           <div className="font-display text-lg leading-tight text-ink">Waypoint</div>
@@ -42,7 +42,7 @@ export function AppShell() {
 
         {/* Mobile bottom tab bar */}
         <nav
-          className="flex shrink-0 items-stretch justify-around border-t border-hairline bg-parchment/95 backdrop-blur md:hidden"
+          className="flex shrink-0 items-stretch justify-around border-t border-line bg-surface/95 backdrop-blur md:hidden"
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
           {navItems.map(({ to, label, icon: Icon }) => (

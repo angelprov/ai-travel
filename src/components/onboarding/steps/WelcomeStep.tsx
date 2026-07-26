@@ -7,8 +7,8 @@ interface WelcomeStepProps {
 
 export function WelcomeStep({ onNext }: WelcomeStepProps) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-parchment px-6 pt-safe pb-safe text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ink text-brass">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-6 pt-safe pb-safe text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-ink text-white">
         <Compass className="h-8 w-8" />
       </div>
       <h1 className="mt-6 font-display text-4xl text-ink">Waypoint</h1>

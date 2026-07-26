@@ -16,13 +16,13 @@ export function Chip({ label, selected, onClick, icon }: ChipProps) {
       aria-pressed={selected}
       className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition-colors ${
         selected
-          ? "border-brass bg-brass/15 text-ink"
-          : "border-hairline bg-card text-ink/80 hover:border-brass/60"
+          ? "border-accent bg-accent/15 text-ink"
+          : "border-line bg-card text-ink/80 hover:border-accent/60"
       }`}
     >
       {icon}
       <span className="flex-1">{label}</span>
-      {selected && <Check className="h-4 w-4 shrink-0 text-brass-dark" />}
+      {selected && <Check className="h-4 w-4 shrink-0 text-accent-dark" />}
     </button>
   );
 }

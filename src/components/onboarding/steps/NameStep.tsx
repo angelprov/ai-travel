@@ -38,7 +38,7 @@ export function NameStep({ value, onChange, onNext, onBack, progress }: NameStep
         onChange={(event) => setName(event.target.value)}
         onKeyDown={(event) => event.key === "Enter" && handleSubmit()}
         placeholder="Your name"
-        className="mt-8 w-full rounded-xl border border-hairline bg-card px-4 py-3 text-lg text-ink outline-none focus:border-brass"
+        className="mt-8 w-full rounded-xl border border-line bg-card px-4 py-3 text-lg text-ink outline-none focus:border-accent"
       />
     </OnboardingLayout>
   );

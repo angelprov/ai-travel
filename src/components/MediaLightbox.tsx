@@ -42,8 +42,8 @@ export function MediaLightbox({ place, onClose }: MediaLightboxProps) {
           )}
 
           {isVideo && playing && (
-            <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-ink/60 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wide text-white">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-brass" />
+            <div className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-ink/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
               Playing preview
             </div>
           )}
@@ -59,7 +59,7 @@ export function MediaLightbox({ place, onClose }: MediaLightboxProps) {
         </div>
 
         <div className="p-5">
-          <div className="font-mono text-[11px] uppercase tracking-widest text-teal">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-teal">
             {isVideo ? "Preview" : "Photo"} · {categoryLabel[place.category]}
           </div>
           <h3 className="mt-1 font-display text-xl text-ink">{place.name}</h3>

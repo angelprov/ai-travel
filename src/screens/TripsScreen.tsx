@@ -15,14 +15,14 @@ function TripRow({ trip, onOpen }: { trip: TripSummary; onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full items-center gap-3 rounded-xl border border-hairline bg-card px-4 py-3.5 text-left transition-colors hover:border-brass/50"
+      className="flex w-full items-center gap-3 rounded-xl border border-line bg-card px-4 py-3.5 text-left transition-colors hover:border-accent/50"
     >
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal/10 text-teal">
         <MapPin className="h-4.5 w-4.5" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium text-ink">{trip.destination}</div>
-        <div className="font-mono text-xs text-ink/50">
+        <div className="text-xs text-ink/50">
           {trip.status === "draft" ? "Draft — tap to start planning" : `${trip.startDate} – ${trip.endDate}`}
         </div>
       </div>
@@ -72,7 +72,7 @@ export function TripsScreen() {
 
       {upcoming.length > 0 && (
         <div className="mb-6 space-y-2">
-          <div className="mb-2 font-mono text-[11px] uppercase tracking-widest text-ink/50">Upcoming</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink/50">Upcoming</div>
           {upcoming.map((trip) => (
             <TripRow key={trip.id} trip={trip} onOpen={() => navigate(`/trips/${trip.id}`)} />
           ))}
@@ -81,7 +81,7 @@ export function TripsScreen() {
 
       {past.length > 0 && (
         <div className="space-y-2">
-          <div className="mb-2 font-mono text-[11px] uppercase tracking-widest text-ink/50">Past</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink/50">Past</div>
           {past.map((trip) => (
             <TripRow key={trip.id} trip={trip} onOpen={() => navigate(`/trips/${trip.id}`)} />
           ))}

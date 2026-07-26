@@ -17,7 +17,7 @@ export function PlaceMedia({ place, onExpand, height = "h-28" }: PlaceMediaProps
     <div className={`relative ${height} w-full overflow-hidden`} style={{ backgroundImage: gradient }}>
       <Icon className="pointer-events-none absolute -bottom-4 -right-4 h-24 w-24 text-white/15" strokeWidth={1.5} />
 
-      <span className="absolute left-2 top-2 rounded-full bg-ink/50 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-white">
+      <span className="absolute left-2 top-2 rounded-full bg-ink/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
         {categoryLabel[place.category]}
       </span>
 

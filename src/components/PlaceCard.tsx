@@ -19,7 +19,7 @@ export function PlaceCard({ place, onSelect, onSwap, onRemove }: PlaceCardProps)
   const hasActions = Boolean(onSwap || onRemove);
 
   return (
-    <div className="w-full overflow-hidden rounded-2xl border border-hairline bg-card shadow-sm transition-transform hover:-translate-y-0.5">
+    <div className="w-full overflow-hidden rounded-2xl border border-line bg-card shadow-sm transition-transform hover:-translate-y-0.5">
       <PlaceMedia place={place} onExpand={() => setLightboxOpen(true)} />
 
       <div
@@ -32,30 +32,30 @@ export function PlaceCard({ place, onSelect, onSwap, onRemove }: PlaceCardProps)
             onSelect(place);
           }
         }}
-        className="ticket-edge cursor-pointer px-4 pb-4 pt-3.5 text-left"
+        className="cursor-pointer px-4 pb-4 pt-3.5 text-left"
       >
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="font-display text-base leading-snug text-ink">{place.name}</div>
-            <div className="mt-0.5 font-mono text-[11px] uppercase tracking-wide text-ink/50">
+            <div className="mt-0.5 text-xs font-medium uppercase tracking-wide text-ink/50">
               {categoryLabel[place.category]}
               {place.timeSlot ? ` · ${place.timeSlot}` : ""}
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-1 font-mono text-xs text-ink/70">
-            <Star className="h-3.5 w-3.5 fill-brass text-brass" />
+          <div className="flex shrink-0 items-center gap-1 text-xs font-medium text-ink/70">
+            <Star className="h-3.5 w-3.5 fill-accent text-accent" />
             {place.rating.toFixed(1)}
           </div>
         </div>
 
         <p className="mt-2 text-sm text-ink/70">{place.description}</p>
 
-        <div className="mt-4 flex items-center justify-between pt-3">
-          <div className="flex items-center gap-1 font-mono text-xs text-ink/60">
+        <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
+          <div className="flex items-center gap-1 text-xs font-medium text-ink/60">
             <Clock className="h-3.5 w-3.5" />
             {place.duration}
           </div>
-          <div className="font-mono text-sm font-semibold text-ink">{place.price}</div>
+          <div className="text-sm font-semibold text-ink">{place.price}</div>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export function PlaceCard({ place, onSelect, onSwap, onRemove }: PlaceCardProps)
                 event.stopPropagation();
                 onSwap(place);
               }}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-hairline bg-parchment py-1.5 font-mono text-[11px] font-medium uppercase tracking-wide text-ink/70 transition-colors hover:border-brass/60"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-line bg-surface py-1.5 text-xs font-medium uppercase tracking-wide text-ink/70 transition-colors hover:border-accent/60"
             >
               <RefreshCw className="h-3 w-3" />
               Swap
@@ -81,7 +81,7 @@ export function PlaceCard({ place, onSelect, onSwap, onRemove }: PlaceCardProps)
                 event.stopPropagation();
                 onRemove(place);
               }}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-hairline bg-parchment py-1.5 font-mono text-[11px] font-medium uppercase tracking-wide text-ink/70 transition-colors hover:border-red-400/60 hover:text-red-500"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-line bg-surface py-1.5 text-xs font-medium uppercase tracking-wide text-ink/70 transition-colors hover:border-red-400/60 hover:text-red-500"
             >
               <X className="h-3 w-3" />
               Remove

@@ -15,8 +15,8 @@ import { AppShell } from "./components/AppShell";
 
 function LoadingScreen() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-parchment">
-      <div className="flex h-12 w-12 animate-pulse items-center justify-center rounded-full bg-ink text-brass">
+    <div className="flex min-h-screen items-center justify-center bg-surface">
+      <div className="flex h-12 w-12 animate-pulse items-center justify-center rounded-full bg-ink text-white">
         <Compass className="h-6 w-6" />
       </div>
     </div>

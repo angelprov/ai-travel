@@ -38,7 +38,7 @@ export function HomeScreen() {
   return (
     <div className="scrollbar-thin h-full overflow-y-auto px-5 py-6" style={{ paddingTop: "calc(1.5rem + env(safe-area-inset-top))" }}>
       <div className="mb-6 flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink text-brass">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-ink text-white">
           <Compass className="h-4.5 w-4.5" />
         </div>
         <div>
@@ -51,14 +51,14 @@ export function HomeScreen() {
         <button
           type="button"
           onClick={() => navigate(`/trips/${recent[0].id}`)}
-          className="mb-4 w-full rounded-2xl border border-hairline bg-card p-4 text-left shadow-sm transition-colors hover:border-brass/50"
+          className="mb-4 w-full rounded-2xl border border-line bg-card p-4 text-left shadow-sm transition-colors hover:border-accent/50"
         >
-          <div className="font-mono text-[11px] uppercase tracking-widest text-teal">Continue planning</div>
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-teal">Continue planning</div>
           <div className="mt-1 flex items-center justify-between gap-3">
             <div>
               <div className="font-display text-lg text-ink">{recent[0].destination}</div>
               {recent[0].startDate && (
-                <div className="font-mono text-xs text-ink/50">
+                <div className="text-xs text-ink/50">
                   {recent[0].startDate} – {recent[0].endDate}
                 </div>
               )}
@@ -81,18 +81,18 @@ export function HomeScreen() {
 
       {recent.length > 1 && (
         <div>
-          <div className="mb-2 font-mono text-[11px] uppercase tracking-widest text-ink/50">Recent trips</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink/50">Recent trips</div>
           <div className="space-y-2">
             {recent.slice(1).map((trip) => (
               <button
                 key={trip.id}
                 type="button"
                 onClick={() => navigate(`/trips/${trip.id}`)}
-                className="flex w-full items-center justify-between rounded-xl border border-hairline bg-card px-4 py-3 text-left transition-colors hover:border-brass/50"
+                className="flex w-full items-center justify-between rounded-xl border border-line bg-card px-4 py-3 text-left transition-colors hover:border-accent/50"
               >
                 <div>
                   <div className="text-sm font-medium text-ink">{trip.destination}</div>
-                  <div className="font-mono text-xs text-ink/50">{trip.startDate || "Draft"}</div>
+                  <div className="text-xs text-ink/50">{trip.startDate || "Draft"}</div>
                 </div>
                 <ArrowRight className="h-4 w-4 shrink-0 text-ink/30" />
               </button>

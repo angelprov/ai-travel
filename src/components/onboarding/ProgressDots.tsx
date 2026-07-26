@@ -10,7 +10,7 @@ export function ProgressDots({ total, current }: ProgressDotsProps) {
         <span
           key={index}
           className={`h-1.5 rounded-full transition-all ${
-            index === current ? "w-6 bg-brass" : "w-1.5 bg-hairline"
+            index === current ? "w-6 bg-accent" : "w-1.5 bg-line"
           }`}
         />
       ))}

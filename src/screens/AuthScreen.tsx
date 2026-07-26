@@ -34,8 +34,8 @@ export function AuthScreen() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-parchment px-6 pt-safe pb-safe">
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-brass">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-surface px-6 pt-safe pb-safe">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-ink text-white">
         <Compass className="h-7 w-7" />
       </div>
       <h1 className="mt-4 font-display text-3xl text-ink">Waypoint</h1>
@@ -55,7 +55,7 @@ export function AuthScreen() {
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="w-full rounded-xl border border-hairline bg-card px-4 py-3 text-base text-ink outline-none focus:border-brass"
+            className="w-full rounded-xl border border-line bg-card px-4 py-3 text-base text-ink outline-none focus:border-accent"
             placeholder="you@example.com"
           />
         </div>
@@ -72,7 +72,7 @@ export function AuthScreen() {
             minLength={8}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="w-full rounded-xl border border-hairline bg-card px-4 py-3 text-base text-ink outline-none focus:border-brass"
+            className="w-full rounded-xl border border-line bg-card px-4 py-3 text-base text-ink outline-none focus:border-accent"
             placeholder="At least 8 characters"
           />
         </div>

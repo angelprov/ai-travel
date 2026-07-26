@@ -11,17 +11,17 @@ interface PaywallStepProps {
 export function PaywallStep({ onSelectPlan, saving, error }: PaywallStepProps) {
   return (
     <div
-      className="flex min-h-screen flex-col bg-parchment px-6 py-10"
+      className="flex min-h-screen flex-col bg-surface px-6 py-10"
       style={{
         paddingTop: "calc(2.5rem + env(safe-area-inset-top))",
         paddingBottom: "calc(2.5rem + env(safe-area-inset-bottom))",
       }}
     >
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
-        <div className="rounded-3xl border border-hairline bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-2 text-brass-dark">
+        <div className="rounded-3xl border border-line bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-accent-dark">
             <Sparkles className="h-5 w-5" />
-            <span className="font-mono text-xs font-semibold uppercase tracking-widest">
+            <span className="text-xs font-semibold uppercase tracking-wide">
               Waypoint Plus
             </span>
           </div>
@@ -30,7 +30,7 @@ export function PaywallStep({ onSelectPlan, saving, error }: PaywallStepProps) {
             <span className="font-display text-4xl text-ink">€12.99</span>
             <span className="text-ink/60">/ month</span>
           </div>
-          <p className="mt-1 font-mono text-xs text-teal">7-day free trial, cancel anytime</p>
+          <p className="mt-1 text-xs text-teal">7-day free trial, cancel anytime</p>
 
           <ul className="mt-6 space-y-3">
             {plusFeatures.map((feature) => (

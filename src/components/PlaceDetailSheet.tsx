@@ -39,7 +39,7 @@ export function PlaceDetailSheet({ place, onClose, onBook }: PlaceDetailSheetPro
       />
 
       <div
-        className={`relative z-10 w-full max-w-lg overflow-hidden rounded-t-3xl border border-hairline bg-parchment shadow-xl transition-transform duration-200 sm:rounded-3xl ${
+        className={`relative z-10 w-full max-w-lg overflow-hidden rounded-t-3xl border border-line bg-surface shadow-xl transition-transform duration-200 sm:rounded-3xl ${
           visible ? "translate-y-0" : "translate-y-8"
         }`}
       >
@@ -56,14 +56,14 @@ export function PlaceDetailSheet({ place, onClose, onBook }: PlaceDetailSheetPro
         </div>
 
         <div className="p-6">
-          <div className="font-mono text-[11px] uppercase tracking-widest text-teal">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-teal">
             {categoryLabel[place.category]}
           </div>
           <h2 className="mt-1 font-display text-2xl text-ink">{place.name}</h2>
 
-          <div className="mt-3 flex items-center gap-4 font-mono text-sm text-ink/70">
+          <div className="mt-3 flex items-center gap-4 text-sm text-ink/70">
             <span className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-brass text-brass" />
+              <Star className="h-4 w-4 fill-accent text-accent" />
               {place.rating.toFixed(1)}
             </span>
             <span className="flex items-center gap-1">
@@ -75,8 +75,8 @@ export function PlaceDetailSheet({ place, onClose, onBook }: PlaceDetailSheetPro
 
           <p className="mt-4 text-sm text-ink/80">{place.description}</p>
 
-          <div className="mt-4 rounded-xl border border-hairline bg-card px-4 py-3">
-            <div className="font-mono text-[11px] uppercase tracking-wide text-brass-dark">
+          <div className="mt-4 rounded-xl border border-line bg-card px-4 py-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-accent-dark">
               Why this was suggested
             </div>
             <p className="mt-1 text-sm text-ink/80">{place.whySuggested}</p>
@@ -95,7 +95,7 @@ export function PlaceDetailSheet({ place, onClose, onBook }: PlaceDetailSheetPro
               type="button"
               onClick={() => setSaved(true)}
               disabled={saved}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-brass py-3 text-sm font-semibold text-ink transition-colors hover:bg-brass-dark disabled:bg-teal disabled:text-white"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-accent py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-dark disabled:bg-teal disabled:text-white"
             >
               {saved ? (
                 <>
